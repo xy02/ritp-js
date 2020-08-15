@@ -1,0 +1,25 @@
+{
+  "name": "ritp-js",
+  "version": "0.1.0",
+  "description": "an implementation of RITP",
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx webpack",
+    "pb": "npx pbjs -t static-module -w commonjs -o ./src/pb.js ritp.proto && npx pbts -o ./src/pb.d.ts ./src/pb.js"
+  },
+  "author": "Yi",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-loader": "^8.0.1",
+    "typescript": "^3.9.7",
+    "uglifyjs-webpack-plugin": "^2.2.0",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12"
+  },
+  "dependencies": {
+    "protobufjs": "~6.10.1",
+    "rxjs": "^6.6.0"
+  }
+}

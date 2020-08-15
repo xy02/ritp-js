@@ -1,0 +1,102 @@
+//v0.1
+syntax = "proto3";
+
+package ritp;
+
+//本端信息，两端在连接建立后首先必须相互发送一次此信息，本端在验证对端信息失败时，发送Frame.close后关闭连接
+message PeerInfo {
+    string vertion = 1;
+    bytes metadata = 2;
+    //数据块
+    bytes chunk = 3;
+}
+
+//数据帧，连接上的基础数据载体，在本端验证对端PeerInfo后发送
+message Frame {
+    oneof type {
+        //表示本端可以接收更多的Frame.event的个数，等同于ReactiveStream里request(n)的意义
+        uint32 pull = 1;
+        //流事件，只有收到对端发送的Frame.pull后，本端才能发送有限个数的Frame.event
+        Event event = 2;
+        //流控制
+        Control control = 3;
+        //表明本端不再接收Frame消息,并关闭连接
+        Disconnect disconnect = 4;
+        // //两端定时发送给对方，默认发送间隔20秒，等待40秒未收到对方ping时关闭连接
+        // Ping ping = 2;
+       
+    }
+}
+
+message Disconnect {
+
+}
+
+/*
+    一条流有以下生命周期：
+    1. 一条流必须由Peer发送一个Event.request开始。
+    2. 接收端收到request后创建一个Handler来处理request信息和之后对端Requester发来数据流。
+    3. Handler发送Control.close表示结束流并不再接收任何流消息，Requester必须在收到close后不再发送任何流消息。
+    4. Requester必须在收到Handler发来的pull后才能发送Event.chunk。
+    5. Requester发送end表示不再发送任何流消息并结束流。
+*/
+
+//流事件，由Requester发送
+message Event {
+    //流ID
+    uint64 stream_id = 1;
+    oneof type {
+        //请求对端开始一条流，本端Requester生产数据，对端Handler消费数据
+        Request request = 2;
+        //流数据，只有收到对端Handler发送的Control.pull后，本端才能发送有限个数的Event.chunk
+        bytes chunk = 3;
+        //结束流
+        End end = 4;
+    }
+}
+
+//请求对端开始一条流
+message Request {
+    //处理者名称，此名称应是一个可以在服务中心注册的服务方法
+    string handler_name = 1;
+    //数据，可以包含生产者的信息、消费者需要的数据等
+    bytes data = 2;
+}
+
+//结束流
+message End {
+    Reason reason = 1;
+    string detail = 2;
+
+    enum Reason {
+        //流成功结束
+        FINISH = 0;
+        CANCEL = 1;
+    }
+}
+
+
+//流控制，由Handler发送
+message Control {
+    //流ID
+    uint64 stream_id = 1;
+    oneof type {
+        //表示Handler可以接收更多的Event.chunk的个数，等同于ReactiveStream里request(n)的意义
+        //生产者发送的Event.chunk总个数必须小于等于消费者发送的Control.pull数值累加总数
+        uint32 pull = 2;
+        //表明Handler不再接收流数据
+        Close close = 3;
+    }
+}
+
+//表明本端Peer或Handler不再接收数据
+message Close {
+    Reason reason = 1;
+    string detail = 2;
+
+    enum Reason {
+        ABORT = 0;
+        APPLICATION_ERROR = 1;
+        PROTOCOL_ERROR = 2;
+    }
+}

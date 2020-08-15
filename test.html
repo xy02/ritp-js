@@ -1,0 +1,21 @@
+<button id="inc">inc</button>
+<button id="dec">dec</button>
+<div id="val"></div>
+<script src="./dist/index.js"></script>
+<script src="./node_modules/rxjs/bundles/rxjs.umd.min.js"></script>
+<script>
+    const { of } = rxjs;
+    const { catchError, delay, repeat } = rxjs.operators;
+    console.info(window.ritp)
+    const socket = ritp.createH5WebSocket('ws://localhost:8000/')
+    console.info(socket)
+    // socket.subscribe(s=>{}, err=>console.info(err))
+    const app = ritp.init({
+        socket,
+        myInfo: { version: "0.1" },
+    }).pipe(
+        catchError(err => of().pipe(delay(2000))),
+        repeat(),
+    )
+    app.subscribe()
+</script>

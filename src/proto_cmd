@@ -1,0 +1,3 @@
+npx pbjs -t static-module -w commonjs -o ritp.js ritp.proto
+npx pbts -o ritp.d.ts ritp.js
+
