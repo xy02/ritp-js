@@ -1,6 +1,6 @@
 const path = require('path');
 
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+// const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 module.exports = {
     mode: "production",
@@ -22,22 +22,22 @@ module.exports = {
     },
 
 
-    optimization: {
-        minimizer: [
-            new UglifyJsPlugin({
-                uglifyOptions: {
-                    output: {
-                        comments: false,
-                    },
-                },
-            })
-        ]
-    },
+    // optimization: {
+    //     minimizer: [
+    //         new UglifyJsPlugin({
+    //             uglifyOptions: {
+    //                 output: {
+    //                     comments: false,
+    //                 },
+    //             },
+    //         })
+    //     ]
+    // },
 
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'index.js',
-        library: 'ritp',
+        library: 'ritp_js',
         libraryTarget: 'umd'
     }
 };

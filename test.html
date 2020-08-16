@@ -6,12 +6,12 @@
 <script>
     const { of } = rxjs;
     const { catchError, delay, repeat } = rxjs.operators;
-    console.info(window.ritp)
-    const socket = ritp.createH5WebSocket('ws://localhost:8000/')
+    console.info(window.ritp_js)
+    const socket = ritp_js.createH5WebSocket('ws://localhost:8000/')
     console.info(socket)
     // socket.subscribe(s=>{}, err=>console.info(err))
-    const app = ritp.init({
-        socket,
+    const app = ritp_js.init({
+        sockets: socket,
         myInfo: { version: "0.1" },
     }).pipe(
         catchError(err => of().pipe(delay(2000))),

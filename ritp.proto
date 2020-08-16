@@ -1,4 +1,4 @@
-//v0.1
+//v0.1.1
 syntax = "proto3";
 
 package ritp;
@@ -14,7 +14,7 @@ message PeerInfo {
 //数据帧，连接上的基础数据载体，在本端验证对端PeerInfo后发送
 message Frame {
     oneof type {
-        //表示本端可以接收更多的Frame.event的个数，等同于ReactiveStream里request(n)的意义
+        //表示本端可以接收更多的Frame.event或Frame.control的个数，等同于ReactiveStream里request(n)的意义
         uint32 pull = 1;
         //流事件，只有收到对端发送的Frame.pull后，本端才能发送有限个数的Frame.event
         Event event = 2;

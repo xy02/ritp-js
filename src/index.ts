@@ -2,11 +2,7 @@ import { merge, Observable, BehaviorSubject, of, combineLatest, throwError } fro
 import { map, scan, ignoreElements, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, groupBy, skip, filter, find, share, last } from "rxjs/operators";
 import { ritp } from "./pb";
 
-interface Sender {
-    send: (buf: Uint8Array) => void
-}
-
-interface Socket {
+export interface Socket {
     send: (buf: Uint8Array) => void
     onBuffer: (cb: (buf: Uint8Array) => void) => void
     onOpen: (cb: () => void) => void
@@ -15,69 +11,47 @@ interface Socket {
     isOpen: () => boolean
 }
 
-interface PeerConfig<T> {
-    socket: Observable<Socket>
+export interface PeerConfig<T> {
+    sockets: Observable<Socket>
     myInfo: ritp.IPeerInfo
     //return mappedInfo
     remoteInfoMapper?: (remoteInfo: ritp.PeerInfo) => Observable<T>
 }
 
-interface Peer<T> {
+export interface Peer<T> {
     stream: (config: StreamConfig<T>) => Observable<number>
     register: (factory: HandlerFactory<T>) => Observable<Uint8Array>
 }
 
-interface PeerContext<T> {
+export interface PeerContext<T> {
     myInfo: ritp.IPeerInfo
     remoteInfo: ritp.IPeerInfo
     mappedInfo: T
 }
 
-interface StreamContext<T> {
-    peerContext: PeerContext<T>
-    controls: Observable<ritp.Control>
-    sendRequest: (request: ritp.IRequest) => void
-    sendChunk: (chunk: Uint8Array) => void
-    sendEnd: (end: ritp.IEnd) => void
-}
-
-interface StreamConfig<T> {
+export interface StreamConfig<T> {
     request: ritp.IRequest
     //请求程序，根据交通信号(true表示可以，false表示不可以)生产数据，返回可观察的生产出的数据
     requester: (ctx: RequesterContext<T>) => Observable<Uint8Array>
 }
 
-interface RequesterContext<T> {
+export interface RequesterContext<T> {
     peerContext: PeerContext<T>
     request: ritp.IRequest
     sendableAmount: Observable<number>
 }
 
-interface HandlerFactory<T> {
+export interface HandlerFactory<T> {
     handlerName: string
     //处理程序，接收处理数据，返回可观察的交通信号，true/false分别表示消费者可以/不可以接收数据
     handler: (ctx: HandlerContext<T>) => Observable<number>
     bufferSize?: number
 }
 
-interface HandlerContext<T> {
+export interface HandlerContext<T> {
     peerContext: PeerContext<T>
     request: ritp.IRequest
     chunks: Observable<Uint8Array>
-}
-
-interface Stream {
-    streamId: number | Long,
-    handlerName: string
-    request: ritp.IRequest
-    chunks: Observable<Uint8Array>
-    end: Observable<ritp.IEnd>
-}
-
-interface RegisterContext<T> {
-    peerContext: PeerContext<T>
-    findStreamsByHandlerName: (handlerName: string) => Observable<Stream>
-    sender: Sender
 }
 
 export const createH5WebSocket = (url: string) => new Observable<Socket>(sub => {
@@ -116,12 +90,7 @@ export const createH5WebSocket = (url: string) => new Observable<Socket>(sub => 
     }
 })
 
-interface Connection {
-    send: (buf: Uint8Array) => void,
-    buffers: Observable<Uint8Array>
-}
-
-export const init = <T>({ socket, myInfo, remoteInfoMapper = of }: PeerConfig<T>): Observable<Peer<T>> => socket.pipe(
+export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T>): Observable<Peer<T>> => sockets.pipe(
     flatMap(({ send, onBuffer, onClose, onOpen, close, isOpen }) => new Observable<Connection>(sub => {
         onClose(reason => {
             sub.error(reason)
@@ -242,6 +211,38 @@ export const init = <T>({ socket, myInfo, remoteInfoMapper = of }: PeerConfig<T>
         }
     }),
 )
+
+
+interface StreamContext<T> {
+    peerContext: PeerContext<T>
+    controls: Observable<ritp.Control>
+    sendRequest: (request: ritp.IRequest) => void
+    sendChunk: (chunk: Uint8Array) => void
+    sendEnd: (end: ritp.IEnd) => void
+}
+
+interface Stream {
+    streamId: number | Long,
+    handlerName: string
+    request: ritp.IRequest
+    chunks: Observable<Uint8Array>
+    end: Observable<ritp.IEnd>
+}
+
+interface RegisterContext<T> {
+    peerContext: PeerContext<T>
+    findStreamsByHandlerName: (handlerName: string) => Observable<Stream>
+    sender: Sender
+}
+
+interface Sender {
+    send: (buf: Uint8Array) => void
+}
+
+interface Connection {
+    send: (buf: Uint8Array) => void,
+    buffers: Observable<Uint8Array>
+}
 
 const stream = <T>(newStreamContext: Observable<StreamContext<T>>) => ({
     request,
