@@ -54,41 +54,47 @@ export interface HandlerContext<T> {
     chunks: Observable<Uint8Array>
 }
 
-export const createH5WebSocket = (url: string) => new Observable<Socket>(sub => {
-    try {
-        const ws = new WebSocket(url, 'ritp')
-        const send = (buf: Uint8Array) => ws.send(buf)
-        const onClose = (cb: (reason: string) => void) => {
-            ws.onclose = function (ev) {
-                cb(ev.reason)
-            }
-        }
-        const onBuffer = (cb: (buf: Uint8Array) => void) => {
-            ws.onmessage = function (ev) {
-                cb(ev.data)
-            }
-        }
-        const onOpen = (cb: () => void) => {
-            ws.onopen = function (ev) {
-                cb()
-            }
-        }
-        const close = () => {
-            ws.close()
-        }
-        sub.next({
-            send,
-            onOpen,
-            onClose,
-            onBuffer,
-            close,
-            isOpen: () => ws.readyState ==ws.OPEN
-        })
-        sub.complete()
-    } catch (e) {
-        sub.error(e)
+export const createH5WebSocket = (url: string):Observable<Socket>=> {
+    if (!window){
+        return throwError('no window')
     }
-})
+    return new Observable<Socket>(sub => {
+    
+        try {
+            const ws = new WebSocket(url, 'ritp')
+            const send = (buf: Uint8Array) => ws.send(buf)
+            const onClose = (cb: (reason: string) => void) => {
+                ws.onclose = function (ev) {
+                    cb(ev.reason)
+                }
+            }
+            const onBuffer = (cb: (buf: Uint8Array) => void) => {
+                ws.onmessage = function (ev) {
+                    cb(ev.data)
+                }
+            }
+            const onOpen = (cb: () => void) => {
+                ws.onopen = function (ev) {
+                    cb()
+                }
+            }
+            const close = () => {
+                ws.close()
+            }
+            sub.next({
+                send,
+                onOpen,
+                onClose,
+                onBuffer,
+                close,
+                isOpen: () => ws.readyState ==ws.OPEN
+            })
+            sub.complete()
+        } catch (e) {
+            sub.error(e)
+        }
+    })
+} 
 
 export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T>): Observable<Peer<T>> => sockets.pipe(
     flatMap(({ send, onBuffer, onClose, onOpen, close, isOpen }) => new Observable<Connection>(sub => {

@@ -5,8 +5,11 @@
     "removeComments": true,
     "sourceMap": true,
     "noImplicitAny": true,
-    "module": "ESNext",
-    "target": "ES5",
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "target": "esnext",
     "allowJs": true,
     "moduleResolution": "node",
   }

@@ -38,6 +38,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: 'index.js',
         library: 'ritp_js',
-        libraryTarget: 'umd'
+        libraryTarget: 'umd',
+        globalObject: 'this',
     }
 };
