@@ -5,10 +5,10 @@ import { ritp } from "./pb";
 export interface Socket {
     send: (buf: Uint8Array) => void
     onBuffer: (cb: (buf: Uint8Array) => void) => void
-    onOpen: (cb: () => void) => void
+    // onOpen: (cb: () => void) => void
     onClose: (cb: (reason: string) => void) => void
     close: () => void
-    isOpen: () => boolean
+    // isOpen: () => boolean
 }
 
 export interface PeerConfig<T> {
@@ -59,45 +59,42 @@ export const createH5WebSocket = (url: string):Observable<Socket>=> {
         return throwError('no window')
     }
     return new Observable<Socket>(sub => {
-    
-        try {
-            const ws = new WebSocket(url, 'ritp')
-            const send = (buf: Uint8Array) => ws.send(buf)
+        const ws = new WebSocket(url, 'ritp')
+        ws.onclose = function(ev) {
+            sub.error(ev.reason)
+        }
+        ws.onopen = function (ev) {
+            ws.onclose = null
+            const send = (buf: Uint8Array) => {
+                console.info("send:", buf)
+                ws.send(buf)
+            }
             const onClose = (cb: (reason: string) => void) => {
-                ws.onclose = function (ev) {
+                ws.addEventListener("close", ev=>{
                     cb(ev.reason)
-                }
+                })
             }
             const onBuffer = (cb: (buf: Uint8Array) => void) => {
-                ws.onmessage = function (ev) {
+                ws.addEventListener("message", ev=>{
                     cb(ev.data)
-                }
-            }
-            const onOpen = (cb: () => void) => {
-                ws.onopen = function (ev) {
-                    cb()
-                }
+                })
             }
             const close = () => {
                 ws.close()
             }
             sub.next({
                 send,
-                onOpen,
                 onClose,
                 onBuffer,
                 close,
-                isOpen: () => ws.readyState ==ws.OPEN
             })
             sub.complete()
-        } catch (e) {
-            sub.error(e)
-        }
+        }       
     })
 } 
 
 export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T>): Observable<Peer<T>> => sockets.pipe(
-    flatMap(({ send, onBuffer, onClose, onOpen, close, isOpen }) => new Observable<Connection>(sub => {
+    flatMap(({ send, onBuffer, onClose, close }) => new Observable<Connection>(sub => {
         onClose(reason => {
             sub.error(reason)
         })
@@ -106,23 +103,17 @@ export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T
                 s.next(buf)
             })
         }).pipe(share())
-        onOpen(() => {
-            sub.next({
-                send,
-                buffers
-            })
+        sub.next({
+            send,
+            buffers
         })
+        send(ritp.PeerInfo.encode(myInfo).finish())
         return () => {
-            if(isOpen()){
-                send(ritp.Frame.encode({ disconnect: {} }).finish())
-                close()
-            }
+            send(ritp.Frame.encode({ disconnect: {} }).finish())
+            close()
         }
     })),
     map(({ buffers, send }) => {
-        const sentInfo = of(myInfo).pipe(
-            tap(info => send(ritp.PeerInfo.encode(info).finish()))
-        )
         const remoteInfo = buffers.pipe(
             take(1),
             map(buf => ritp.PeerInfo.decode(buf))
@@ -130,8 +121,8 @@ export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T
         const mappedInfo = remoteInfo.pipe(
             flatMap(remoteInfoMapper)
         )
-        const peerContext = combineLatest(sentInfo, remoteInfo, mappedInfo).pipe(
-            map(([myInfo, remoteInfo, mappedInfo]) => ({
+        const peerContext = combineLatest(remoteInfo, mappedInfo).pipe(
+            map(([remoteInfo, mappedInfo]) => ({
                 myInfo, remoteInfo, mappedInfo
             })),
             shareReplay(),

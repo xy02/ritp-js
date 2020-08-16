@@ -5,8 +5,8 @@ export namespace ritp {
     /** Properties of a PeerInfo. */
     interface IPeerInfo {
 
-        /** PeerInfo vertion */
-        vertion?: (string|null);
+        /** PeerInfo version */
+        version?: (string|null);
 
         /** PeerInfo metadata */
         metadata?: (Uint8Array|null);
@@ -24,8 +24,8 @@ export namespace ritp {
          */
         constructor(properties?: ritp.IPeerInfo);
 
-        /** PeerInfo vertion. */
-        public vertion: string;
+        /** PeerInfo version. */
+        public version: string;
 
         /** PeerInfo metadata. */
         public metadata: Uint8Array;

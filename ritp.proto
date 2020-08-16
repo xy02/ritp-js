@@ -1,11 +1,11 @@
-//v0.1.1
+//v0.1.2
 syntax = "proto3";
 
 package ritp;
 
 //本端信息，两端在连接建立后首先必须相互发送一次此信息，本端在验证对端信息失败时，发送Frame.close后关闭连接
 message PeerInfo {
-    string vertion = 1;
+    string version = 1;
     bytes metadata = 2;
     //数据块
     bytes chunk = 3;

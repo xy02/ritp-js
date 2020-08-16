@@ -24,7 +24,7 @@ $root.ritp = (function() {
          * Properties of a PeerInfo.
          * @memberof ritp
          * @interface IPeerInfo
-         * @property {string|null} [vertion] PeerInfo vertion
+         * @property {string|null} [version] PeerInfo version
          * @property {Uint8Array|null} [metadata] PeerInfo metadata
          * @property {Uint8Array|null} [chunk] PeerInfo chunk
          */
@@ -45,12 +45,12 @@ $root.ritp = (function() {
         }
 
         /**
-         * PeerInfo vertion.
-         * @member {string} vertion
+         * PeerInfo version.
+         * @member {string} version
          * @memberof ritp.PeerInfo
          * @instance
          */
-        PeerInfo.prototype.vertion = "";
+        PeerInfo.prototype.version = "";
 
         /**
          * PeerInfo metadata.
@@ -92,8 +92,8 @@ $root.ritp = (function() {
         PeerInfo.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.vertion != null && Object.hasOwnProperty.call(message, "vertion"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.vertion);
+            if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.version);
             if (message.metadata != null && Object.hasOwnProperty.call(message, "metadata"))
                 writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.metadata);
             if (message.chunk != null && Object.hasOwnProperty.call(message, "chunk"))
@@ -133,7 +133,7 @@ $root.ritp = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.vertion = reader.string();
+                    message.version = reader.string();
                     break;
                 case 2:
                     message.metadata = reader.bytes();
@@ -176,9 +176,9 @@ $root.ritp = (function() {
         PeerInfo.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.vertion != null && message.hasOwnProperty("vertion"))
-                if (!$util.isString(message.vertion))
-                    return "vertion: string expected";
+            if (message.version != null && message.hasOwnProperty("version"))
+                if (!$util.isString(message.version))
+                    return "version: string expected";
             if (message.metadata != null && message.hasOwnProperty("metadata"))
                 if (!(message.metadata && typeof message.metadata.length === "number" || $util.isString(message.metadata)))
                     return "metadata: buffer expected";
@@ -200,8 +200,8 @@ $root.ritp = (function() {
             if (object instanceof $root.ritp.PeerInfo)
                 return object;
             var message = new $root.ritp.PeerInfo();
-            if (object.vertion != null)
-                message.vertion = String(object.vertion);
+            if (object.version != null)
+                message.version = String(object.version);
             if (object.metadata != null)
                 if (typeof object.metadata === "string")
                     $util.base64.decode(object.metadata, message.metadata = $util.newBuffer($util.base64.length(object.metadata)), 0);
@@ -229,7 +229,7 @@ $root.ritp = (function() {
                 options = {};
             var object = {};
             if (options.defaults) {
-                object.vertion = "";
+                object.version = "";
                 if (options.bytes === String)
                     object.metadata = "";
                 else {
@@ -245,8 +245,8 @@ $root.ritp = (function() {
                         object.chunk = $util.newBuffer(object.chunk);
                 }
             }
-            if (message.vertion != null && message.hasOwnProperty("vertion"))
-                object.vertion = message.vertion;
+            if (message.version != null && message.hasOwnProperty("version"))
+                object.version = message.version;
             if (message.metadata != null && message.hasOwnProperty("metadata"))
                 object.metadata = options.bytes === String ? $util.base64.encode(message.metadata, 0, message.metadata.length) : options.bytes === Array ? Array.prototype.slice.call(message.metadata) : message.metadata;
             if (message.chunk != null && message.hasOwnProperty("chunk"))

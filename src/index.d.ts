@@ -3,10 +3,8 @@ import { ritp } from "./pb";
 export interface Socket {
     send: (buf: Uint8Array) => void;
     onBuffer: (cb: (buf: Uint8Array) => void) => void;
-    onOpen: (cb: () => void) => void;
     onClose: (cb: (reason: string) => void) => void;
     close: () => void;
-    isOpen: () => boolean;
 }
 export interface PeerConfig<T> {
     sockets: Observable<Socket>;
