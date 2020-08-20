@@ -4,18 +4,45 @@
 <script src="./dist/index.js"></script>
 <script src="./node_modules/rxjs/bundles/rxjs.umd.min.js"></script>
 <script>
-    const { of } = rxjs;
-    const { catchError, delay, repeat } = rxjs.operators;
-    console.info(window.ritp_js)
+    const { of, from, Observable, interval } = rxjs;
+    const { catchError, delay, repeat, flatMap,map, tap, merge, shareReplay, take, groupBy, find, takeUntil } = rxjs.operators;
+
     const socket = ritp_js.createH5WebSocket('ws://localhost:8000/')
-    console.info(socket)
-    // socket.subscribe(s=>{}, err=>console.info(err))
-    const app = ritp_js.init({
-        sockets: socket,
-        myInfo: { version: "0.1" },
-    }).pipe(
+
+    const parseToChunk = str => new Observable(sub => {
+        const b = new Blob([str])
+        const fr = new FileReader()
+        fr.readAsArrayBuffer(b)
+        fr.onload = function(){
+            const buf = new Uint8Array(fr.result)
+            sub.next(buf)
+            sub.complete()
+        }
+    })
+    const app = parseToChunk("app1").pipe(
+        // tap(chunk => console.info(chunk)),
+        flatMap(chunk => ritp_js.init({
+            sockets: socket,
+            myInfo: { version: "0.1", chunk},
+        })),
         catchError(err => of().pipe(delay(2000))),
         repeat(),
+        flatMap(peer => parseToChunk("request1").pipe(
+            flatMap(chunk => peer.stream({
+                request: request1(chunk),
+                requester: accRequester,
+            })),
+        )),
+    )
+    const request1 = chunk => ({
+        handlerName:'acc',
+        data: chunk,
+    })
+    const accRequester = ({request, sendableAmount}) => sendableAmount.pipe(
+        flatMap(amount => {
+            console.info('amount', amount)
+            return of(new Uint8Array([amount]))
+        }),
     )
     app.subscribe()
 </script>

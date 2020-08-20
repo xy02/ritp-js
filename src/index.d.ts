@@ -18,7 +18,7 @@ export interface Peer<T> {
 export interface PeerContext<T> {
     myInfo: ritp.IPeerInfo;
     remoteInfo: ritp.IPeerInfo;
-    mappedInfo: T;
+    observableInfo: Observable<T>;
 }
 export interface StreamConfig<T> {
     request: ritp.IRequest;
@@ -27,7 +27,7 @@ export interface StreamConfig<T> {
 export interface RequesterContext<T> {
     peerContext: PeerContext<T>;
     request: ritp.IRequest;
-    sendableAmount: Observable<number>;
+    sendableAmounts: Observable<number>;
 }
 export interface HandlerFactory<T> {
     handlerName: string;

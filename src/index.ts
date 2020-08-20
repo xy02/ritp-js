@@ -1,4 +1,4 @@
-import { merge, Observable, BehaviorSubject, of, combineLatest, throwError } from 'rxjs'
+import { merge, Observable, BehaviorSubject, Subject, of, combineLatest, throwError } from 'rxjs'
 import { map, scan, ignoreElements, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, groupBy, skip, filter, find, share, last } from "rxjs/operators";
 import { ritp } from "./pb";
 
@@ -26,7 +26,8 @@ export interface Peer<T> {
 export interface PeerContext<T> {
     myInfo: ritp.IPeerInfo
     remoteInfo: ritp.IPeerInfo
-    mappedInfo: T
+    // mappedInfo: T
+    observableInfo: Observable<T>
 }
 
 export interface StreamConfig<T> {
@@ -38,7 +39,7 @@ export interface StreamConfig<T> {
 export interface RequesterContext<T> {
     peerContext: PeerContext<T>
     request: ritp.IRequest
-    sendableAmount: Observable<number>
+    sendableAmounts: Observable<number>
 }
 
 export interface HandlerFactory<T> {
@@ -54,13 +55,14 @@ export interface HandlerContext<T> {
     chunks: Observable<Uint8Array>
 }
 
-export const createH5WebSocket = (url: string):Observable<Socket>=> {
-    if (!window){
+export const createH5WebSocket = (url: string): Observable<Socket> => {
+    if (!window) {
         return throwError('no window')
     }
     return new Observable<Socket>(sub => {
         const ws = new WebSocket(url, 'ritp')
-        ws.onclose = function(ev) {
+        ws.binaryType = "arraybuffer"
+        ws.onclose = function (ev) {
             sub.error(ev.reason)
         }
         ws.onopen = function (ev) {
@@ -70,13 +72,15 @@ export const createH5WebSocket = (url: string):Observable<Socket>=> {
                 ws.send(buf)
             }
             const onClose = (cb: (reason: string) => void) => {
-                ws.addEventListener("close", ev=>{
+                ws.addEventListener("close", ev => {
                     cb(ev.reason)
                 })
             }
             const onBuffer = (cb: (buf: Uint8Array) => void) => {
-                ws.addEventListener("message", ev=>{
-                    cb(ev.data)
+                ws.addEventListener("message", ev => {
+                    const buf = new Uint8Array(ev.data)
+                    console.info("received:", buf)
+                    cb(buf)
                 })
             }
             const close = () => {
@@ -89,20 +93,19 @@ export const createH5WebSocket = (url: string):Observable<Socket>=> {
                 close,
             })
             sub.complete()
-        }       
+        }
     })
-} 
+}
 
 export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T>): Observable<Peer<T>> => sockets.pipe(
     flatMap(({ send, onBuffer, onClose, close }) => new Observable<Connection>(sub => {
         onClose(reason => {
             sub.error(reason)
         })
-        const buffers = new Observable<Uint8Array>(s => {
-            onBuffer(buf => {
-                s.next(buf)
-            })
-        }).pipe(share())
+        const buffers = new Subject<Uint8Array>()
+        onBuffer(buf => {
+            buffers.next(buf)
+        })
         sub.next({
             send,
             buffers
@@ -118,25 +121,37 @@ export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T
             take(1),
             map(buf => ritp.PeerInfo.decode(buf))
         )
-        const mappedInfo = remoteInfo.pipe(
-            flatMap(remoteInfoMapper)
+        // const mappedInfo = remoteInfo.pipe(
+        //     flatMap(remoteInfoMapper)
+        // )
+        // const peerContext = combineLatest(remoteInfo, mappedInfo).pipe(
+        //     map(([remoteInfo, mappedInfo]) => ({
+        //         myInfo, remoteInfo, mappedInfo
+        //     })),
+        //     shareReplay(),
+        // )
+        const observableInfo = remoteInfo.pipe(
+            flatMap(remoteInfoMapper),
+            shareReplay(1),
         )
-        const peerContext = combineLatest(remoteInfo, mappedInfo).pipe(
-            map(([remoteInfo, mappedInfo]) => ({
-                myInfo, remoteInfo, mappedInfo
+        const peerContext = remoteInfo.pipe(
+            map(remoteInfo => ({
+                myInfo, remoteInfo, observableInfo
             })),
             shareReplay(),
         )
         const groupedFramesByType = buffers.pipe(
-            skip(1),
+            // skip(1),
             map(buf => ritp.Frame.decode(buf)),
             groupBy(frame => frame.type),
+            shareReplay(),
         )
         const events = groupedFramesByType.pipe(
             find(group => group.key == "event"),
             flatMap(group => group),
             map(frame => frame.event as ritp.Event),
         )
+        //wrong
         const streams: Observable<Stream> = events.pipe(
             groupBy(ev => ev.streamId),
             flatMap(group => {
@@ -146,7 +161,7 @@ export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T
                     shareReplay(),
                 )
                 const firstRequest = groupedEventsByType.pipe(
-                    take(1),
+                    take(1), //wrong
                     flatMap(g => g.key == "request" ? g : throwError(new Error('oops!'))),
                     map(g => g.request),
                 )
@@ -196,7 +211,13 @@ export const init = <T>({ sockets, myInfo, remoteInfoMapper = of }: PeerConfig<T
                     find(group => group.key == streamId),
                     flatMap(group => group),
                 )
-                const sendRequest = (request: ritp.IRequest) => send(ritp.Frame.encode({ event: { streamId, request } }).finish())
+                const sendRequest = (request: ritp.IRequest) => {
+                    // send(ritp.Frame.encode({ event: { streamId, request } }).finish())
+                    console.info('prepare request frame', streamId, request)
+                    let test = ritp.Frame.encode({ event: { streamId, request } }).finish()
+                    // console.info('the request proto buf',test)
+                    send(test)
+                }
                 const sendChunk = (chunk: Uint8Array) => send(ritp.Frame.encode({ event: { streamId, chunk } }).finish())
                 const sendEnd = (end: ritp.IEnd) => send(ritp.Frame.encode({ event: { streamId, end } }).finish())
                 return { peerContext, controls, sendRequest, sendChunk, sendEnd }
@@ -248,11 +269,11 @@ const stream = <T>(newStreamContext: Observable<StreamContext<T>>) => ({
     tap(({ sendRequest }) => sendRequest(request)),
     flatMap(({ peerContext, controls, sendChunk, sendEnd }) => {
         const sendableAmountSubject = new BehaviorSubject<number>(0)
-        const handledChunks = requester({ peerContext, request, sendableAmount: sendableAmountSubject })
+        const handledChunks = requester({ peerContext, request, sendableAmounts: sendableAmountSubject })
         const isSendable = sendableAmountSubject.pipe(
             map(num => num > 0)
         )
-        const totalSends = handledChunks.pipe(
+        const sends = handledChunks.pipe(
             withLatestFrom(isSendable),
             filter(([_, sendable]) => sendable),
             tap(
@@ -260,10 +281,10 @@ const stream = <T>(newStreamContext: Observable<StreamContext<T>>) => ({
                 err => sendEnd({ reason: ritp.End.Reason.CANCEL, detail: JSON.stringify(err) }),
                 () => sendEnd({ reason: ritp.End.Reason.FINISH })
             ),
-            scan((acc, _) => acc - 1, 0),
+            map(_ => -1),
             share(),
         )
-        const theEnd = totalSends.pipe(last())
+        const theEnd = sends.pipe(last())
         const groupedControlsByType = controls.pipe(
             groupBy(control => control.type),
         )
@@ -273,22 +294,23 @@ const stream = <T>(newStreamContext: Observable<StreamContext<T>>) => ({
             // tap(control => sendableAmountSubject.error(control.close)),
             flatMap(control => throwError(control.close)),
         )
-        const totalPulls = groupedControlsByType.pipe(
+        const pulls = groupedControlsByType.pipe(
             find(group => group.key == "pull"),
             flatMap(group => group),
             scan((acc, control) => acc + control.pull, 0),
-            share(),
+            // share(),
         )
-        const sendableAmount = merge(totalPulls, totalSends).pipe(
+        const sendableAmounts = merge(pulls, sends).pipe(
             scan((acc, num) => acc + num, 0),
             tap(num => sendableAmountSubject.next(num)),
             takeUntil(remoteClose),
             takeUntil(theEnd),
         )
-        const finish = sendableAmount.pipe(last())
-        return totalPulls.pipe(
-            takeUntil(finish),
-        )
+        return sendableAmounts
+        // const finish = sendableAmount.pipe(last())
+        // return totalPulls.pipe(
+        //     takeUntil(finish),
+        // )
     }),
 )
 
