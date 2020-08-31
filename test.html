@@ -4,16 +4,34 @@
 <script src="./dist/index.js"></script>
 <script src="./node_modules/rxjs/bundles/rxjs.umd.min.js"></script>
 <script>
-    const { of, from, Observable, interval } = rxjs;
-    const { catchError, delay, repeat, flatMap,map, tap, merge, shareReplay, take, groupBy, find, takeUntil } = rxjs.operators;
+    const { of, from } = rxjs
+    const { startWith, flatMap, find, concatMap } = rxjs.operators
 
+    const arr = [{ id: 1, children: [{ id: 2, name: 'lucky', children: [{ id: 6, name: 'x' }] }] }, { id: 5, name: 123 ,children: [{ id: 7, name: 'x' }]}]
+    const fromArr = (arr, children) => from(arr).pipe(
+        flatMap(obj => obj[children] instanceof Array ?
+            fromArr(obj[children], children).pipe(
+                startWith(obj)
+            ) : of(obj)
+        )
+    )
+    const search = (arr = [], children = 'children') => (key, value) => fromArr(arr, children).pipe(
+        find(obj => obj[key] === value)
+    )
+    const searchArr = search(arr)
+    searchArr('id', 7).subscribe(console.log)
+    searchArr('name', 'x').subscribe(console.log)
+</script>
+<script>
+    // const { of, from, Observable, interval } = rxjs;
+    // const { startWith, catchError, delay, repeat, flatMap,map, tap, merge, shareReplay,share, take, groupBy, find, takeUntil,finalize } = rxjs.operators;
     const socket = ritp_js.createH5WebSocket('ws://localhost:8000/')
 
     const parseToChunk = str => new Observable(sub => {
         const b = new Blob([str])
         const fr = new FileReader()
         fr.readAsArrayBuffer(b)
-        fr.onload = function(){
+        fr.onload = function () {
             const buf = new Uint8Array(fr.result)
             sub.next(buf)
             sub.complete()
@@ -23,7 +41,7 @@
         // tap(chunk => console.info(chunk)),
         flatMap(chunk => ritp_js.init({
             sockets: socket,
-            myInfo: { version: "0.1", chunk},
+            myInfo: { version: "0.1", chunk },
         })),
         catchError(err => of().pipe(delay(2000))),
         repeat(),
@@ -35,14 +53,14 @@
         )),
     )
     const request1 = chunk => ({
-        handlerName:'acc',
+        handlerName: 'acc',
         data: chunk,
     })
-    const accRequester = ({request, sendableAmount}) => sendableAmount.pipe(
+    const accRequester = ({ request, sendableAmount }) => sendableAmount.pipe(
         flatMap(amount => {
             console.info('amount', amount)
             return of(new Uint8Array([amount]))
         }),
     )
-    app.subscribe()
+    // app.subscribe()
 </script>

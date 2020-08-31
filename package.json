@@ -1,6 +1,6 @@
 {
   "name": "ritp-js",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "an implementation of RITP",
   "repository": {"type": "git", "url": "https://github.com/xy02/ritp-js.git"},
   "main": "./dist/index.js",

@@ -1,43 +1,29 @@
 import { Observable } from 'rxjs';
 import { ritp } from "./pb";
-export interface Socket {
-    send: (buf: Uint8Array) => void;
-    onBuffer: (cb: (buf: Uint8Array) => void) => void;
-    onClose: (cb: (reason: string) => void) => void;
-    close: () => void;
+declare type Output = (bufs: Observable<Uint8Array>) => void;
+export interface Connector {
+    (onUnsubscribe: (output: Output) => void): Observable<Connection>;
 }
-export interface PeerConfig<T> {
-    sockets: Observable<Socket>;
-    myInfo: ritp.IPeerInfo;
-    remoteInfoMapper?: (remoteInfo: ritp.PeerInfo) => Observable<T>;
+export interface Connection {
+    receiver: Observable<Uint8Array>;
+    output: (bufs: Observable<Uint8Array>) => void;
 }
-export interface Peer<T> {
-    stream: (config: StreamConfig<T>) => Observable<number>;
-    register: (factory: HandlerFactory<T>) => Observable<Uint8Array>;
-}
-export interface PeerContext<T> {
-    myInfo: ritp.IPeerInfo;
+export interface Peer {
     remoteInfo: ritp.IPeerInfo;
-    observableInfo: Observable<T>;
+    stream: (request: ritp.IRequest) => Stream;
+    register: (path: string) => Observable<StreamRequest>;
 }
-export interface StreamConfig<T> {
-    request: ritp.IRequest;
-    requester: (ctx: RequesterContext<T>) => Observable<Uint8Array>;
-}
-export interface RequesterContext<T> {
-    peerContext: PeerContext<T>;
-    request: ritp.IRequest;
+export interface Stream {
     sendableAmounts: Observable<number>;
+    isSendable: Observable<boolean>;
+    outputBufs: (bufs: Observable<Uint8Array>) => void;
 }
-export interface HandlerFactory<T> {
-    handlerName: string;
-    handler: (ctx: HandlerContext<T>) => Observable<number>;
-    bufferSize?: number;
-}
-export interface HandlerContext<T> {
-    peerContext: PeerContext<T>;
+export interface StreamRequest {
+    path: string;
     request: ritp.IRequest;
-    chunks: Observable<Uint8Array>;
+    bufs: Observable<Uint8Array>;
+    outputPulls: (pulls: Observable<number>) => void;
 }
-export declare const createH5WebSocket: (url: string) => Observable<Socket>;
-export declare const init: <T>({ sockets, myInfo, remoteInfoMapper }: PeerConfig<T>) => Observable<Peer<T>>;
+export declare const h5WsConnector: (url: string) => (onUnsubscribe: (output: Output) => void) => Observable<Connection>;
+export declare const init: (connector: Connector, myInfo: ritp.IPeerInfo) => Observable<Peer>;
+export {};
