@@ -2,16 +2,10 @@ import { merge, Observable, BehaviorSubject, Subject, of, combineLatest, throwEr
 import { map, scan, ignoreElements, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, groupBy, skip, filter, find, share, last, finalize, catchError, endWith, startWith, distinctUntilChanged } from "rxjs/operators";
 import { ritp } from "./pb";
 
-type Output = (bufs: Observable<Uint8Array>) => void
-
-export interface Connector {
-    (onUnsubscribe: (output: Output) => void): Observable<Connection>
-}
-
 export interface Connection {
-    receiver: Observable<Uint8Array>
-    // sender: Subject<Uint8Array>
+    buffers: Observable<Uint8Array>
     output: (bufs: Observable<Uint8Array>) => void
+    onUnsubscribe: Observable<void>
 }
 
 export interface Peer {
@@ -20,10 +14,6 @@ export interface Peer {
     stream: (request: ritp.IRequest) => Stream
     //注册stream处理路径
     register: (path: string) => Observable<StreamRequest>
-    // data: Observable<ritp.IData>
-    // controls: Observable<ritp.IControl>
-    // outputEvents: (events: Observable<ritp.IEvent>) => void
-    // outputControls: (controls: Observable<ritp.IControl>) => void
 }
 
 export interface Stream {
@@ -38,88 +28,84 @@ export interface StreamRequest {
     outputPulls: (pulls: Observable<number>) => void
 }
 
-export const h5WsConnector = (url: string) => (onUnsubscribe: (output: Output) => void) =>
-    new Observable<Connection>(s => {
-        const ws = new WebSocket(url, 'ritp')
-        ws.binaryType = "arraybuffer"
-        ws.onclose = function (ev) {
-            s.error(ev.reason)
+export const h5WsConnection = (url: string) => new Observable<Connection>(s => {
+    const ws = new WebSocket(url, 'ritp')
+    ws.binaryType = "arraybuffer"
+    ws.onclose = function (ev) {
+        s.error(ev.reason)
+    }
+    const buffers = new Observable<Uint8Array>(s2 => {
+        const cb = (ev: MessageEvent) => {
+            const buf = new Uint8Array(ev.data)
+            // console.info("received:", buf)
+            s2.next(buf)
         }
-        const receiver = new Observable<Uint8Array>(s2 => {
-            const cb = (ev: MessageEvent) => {
-                const buf = new Uint8Array(ev.data)
-                // console.info("received:", buf)
-                s2.next(buf)
-            }
-            ws.addEventListener("message", cb)
-            return () => {
-                ws.removeEventListener("message", cb)
-            }
-        })
-        // const sender = new Subject<Uint8Array>()
-        // const sub = sender.subscribe(
-        //     buf => ws.send(buf),
-        //     err => ws.close(4000, err.toString()),
-        //     () => ws.close()
-        // )
-        const outputs = new Subject<Observable<Uint8Array>>()
-        const outputCb = (output: Observable<Uint8Array>) => {
-            outputs.next(output)
-        }
-        const sub = outputs.pipe(
-            flatMap(output => output),
-        ).subscribe(
-            buf => ws.send(buf),
-            err => ws.close(4000, err.toString()),
-            () => ws.close()
-        )
-        ws.onopen = function (ev) {
-            s.next({
-                receiver,
-                output: outputCb,
-                // sender,
-            })
-        }
+        ws.addEventListener("message", cb)
         return () => {
-            onUnsubscribe(outputCb)
-            sub.unsubscribe()
-            ws.close()
+            ws.removeEventListener("message", cb)
         }
     })
+    const outputs = new Subject<Observable<Uint8Array>>()
+    const outputCb = (output: Observable<Uint8Array>) => {
+        outputs.next(output)
+    }
+    const sub = outputs.pipe(
+        flatMap(output => output),
+    ).subscribe(
+        buf => ws.send(buf),
+        err => ws.close(4000, err.toString()),
+        () => ws.close()
+    )
+    const onUnsubscribe = new Subject<void>()
+    ws.onopen = function (ev) {
+        s.next({
+            buffers,
+            output: outputCb,
+            onUnsubscribe,
+        })
+    }
+    return () => {
+        onUnsubscribe.next()
+        onUnsubscribe.complete()
+        sub.unsubscribe()
+        ws.close()
+    }
+})
 
 //初始化Peer
-export const init = (connector: Connector, myInfo: ritp.IPeerInfo): Observable<Peer> => connector(output => {
-    //onUnsubscribe
-    output(of(ritp.Frame.encode({ disconnect: {} }).finish()))
-}).pipe(
-    tap(({ output }) => output(of(ritp.PeerInfo.encode(myInfo).finish()))),
-    flatMap(({ receiver, output }) => receiver.pipe(
+export const init = (connection: Observable<Connection>, myInfo: ritp.IPeerInfo): Observable<Peer> => connection.pipe(
+    tap(({ output, onUnsubscribe }) => {
+        onUnsubscribe.subscribe(() => {
+            output(of(ritp.Frame.encode({ disconnect: {} }).finish()))
+        })
+        output(of(ritp.PeerInfo.encode(myInfo).finish()))
+    }),
+    flatMap(({ buffers, output }) => buffers.pipe(
         take(1),
         map(buf => ritp.PeerInfo.decode(buf)),
         map(remoteInfo => {
-            const groupedFramesByType = receiver.pipe(
+            const groupedFramesByType = buffers.pipe(
                 map(buf => ritp.Frame.decode(buf)),
                 groupBy(frame => frame.type),
                 shareReplay(),
             )
-
-            const controls = groupedFramesByType.pipe(
-                find(group => group.key == "control"),
+            const groupedEventsByType = groupedFramesByType.pipe(
+                find(group => group.key == "event"),
                 flatMap(group => group),
-                map(frame => frame.control as ritp.Control),
+                map(frame => frame.event as ritp.Event),
+                groupBy(event => event.type),
+                shareReplay(),
             )
-            // const outputEvents = (events: Observable<ritp.IEvent>) => output(
-            //     events.pipe(
-            //         map(event => ritp.Frame.encode({ event }).finish()),
-            //     )
-            // )
-            // const outputControls = (controls: Observable<ritp.IControl>) => output(
-            //     controls.pipe(
-            //         map(control => ritp.Frame.encode({ control }).finish()),
-            //     )
-            // )
-            const groupedControlsByStreamId = controls.pipe(
-                groupBy(control => control.streamId),
+            const groupedCloseEventsByStreamId = groupedEventsByType.pipe(
+                find(group => group.key == "close"),
+                flatMap(group => group),
+                groupBy(event => event.streamId),
+                shareReplay(),
+            )
+            const groupedPullEventsByStreamId = groupedEventsByType.pipe(
+                find(group => group.key == "pull"),
+                flatMap(group => group),
+                groupBy(event => event.streamId),
                 shareReplay(),
             )
             // const streamIdSubject = new BehaviorSubject<number>(0)
@@ -131,23 +117,16 @@ export const init = (connector: Connector, myInfo: ritp.IPeerInfo): Observable<P
             const newStreamId = () => sid++
             const stream = (request: ritp.IRequest): Stream => {
                 const streamId = newStreamId()
-                const controls = groupedControlsByStreamId.pipe(
+                const remoteClose = groupedCloseEventsByStreamId.pipe(
                     find(group => group.key == streamId),
                     flatMap(group => group),
-                )
-                const groupedControlsByType = controls.pipe(
-                    groupBy(control => control.type),
-                )
-                const remoteClose = groupedControlsByType.pipe(
-                    find(group => group.key == "close"),
-                    flatMap(group => group),
                     take(1),
-                    flatMap(control => throwError(control.close)),
+                    flatMap(ev => throwError(ev.close)),
                 )
-                const pullsAmounts = groupedControlsByType.pipe(
-                    find(group => group.key == "pull"),
+                const pullsAmounts = groupedPullEventsByStreamId.pipe(
+                    find(group => group.key == streamId),
                     flatMap(group => group),
-                    scan((acc, control) => acc + control.pull, 0),
+                    scan((acc, ev) => acc + ev.pull, 0),
                 )
                 const sends = new BehaviorSubject<number>(0)
                 const sendableAmounts = merge(pullsAmounts, sends).pipe(
@@ -162,63 +141,54 @@ export const init = (connector: Connector, myInfo: ritp.IPeerInfo): Observable<P
                 )
                 const outputBufs = (bufs: Observable<Uint8Array>) => output(
                     bufs.pipe(
+                        takeUntil(remoteClose),
                         withLatestFrom(isSendable),
                         filter(([_, sendable]) => sendable),
                         tap(() => sends.next(-1)),
                         map(([buf, _]) => ({ streamId, buf })),
                         startWith({ streamId, request }),
                         endWith({ streamId, end: { reason: ritp.End.Reason.COMPLETE } }),
-                        catchError(err => of({ streamId, end: { reason: ritp.End.Reason.CANCEL, detail: err.message } })),
-                        map(data => ritp.Frame.encode({ data }).finish()),
+                        catchError(err => of({ streamId, end: { reason: ritp.End.Reason.CANCEL, message: err.message } })),
+                        map(event => ritp.Frame.encode({ event }).finish()),
                     )
                 )
                 return { sendableAmounts, outputBufs, isSendable }
             }
-            const data = groupedFramesByType.pipe(
-                find(group => group.key == "data"),
+            const groupedEndEventsByStreamId = groupedEventsByType.pipe(
+                find(group => group.key == "end"),
                 flatMap(group => group),
-                map(frame => frame.data as ritp.Data),
-            )
-            const groupedDataByStreamId = data.pipe(
-                groupBy(d => d.streamId),
+                groupBy(event => event.streamId),
                 shareReplay(),
             )
-            const requests = groupedFramesByType.pipe(
+            const groupedBufEventsByStreamId = groupedEventsByType.pipe(
+                find(group => group.key == "buf"),
+                flatMap(group => group),
+                groupBy(event => event.streamId),
+                shareReplay(),
+            )
+            const streamRequests = groupedEventsByType.pipe(
                 find(group => group.key == "request"),
                 flatMap(group => group),
-                map(frame => frame.request as ritp.Request),
-            )
-            // const groupedRequestsByStreamId = requests.pipe(
-            //     groupBy(d => d.streamId),
-            //     shareReplay(),
-            // )
-            const streamRequests = requests.pipe(
-                map(request => {
-                    const streamId = request.streamId
-                    const data = groupedDataByStreamId.pipe(
+                map(event => {
+                    const streamId = event.streamId
+                    const request = event.request
+                    const theEnd = groupedEndEventsByStreamId.pipe(
                         find(group => group.key == streamId),
                         flatMap(group => group),
-                    )
-                    const groupedDataByType = data.pipe(
-                        groupBy(d => d.type),
-                    )
-                    const theEnd = groupedDataByType.pipe(
-                        find(group => group.key == "end"),
-                        flatMap(group => group),
                         take(1),
-                        flatMap(d => d.end.reason != ritp.End.Reason.COMPLETE ? throwError(d.end) : of(d.end)),
+                        flatMap(ev => ev.end.reason != ritp.End.Reason.COMPLETE ? throwError(ev.end) : of(ev.end)),
                     )
                     //需要验证buf的数量
-                    const bufs = groupedDataByType.pipe(
-                        find(group => group.key == "buf"),
+                    const bufs = groupedBufEventsByStreamId.pipe(
+                        find(group => group.key == streamId),
                         flatMap(group => group),
-                        map(d => d.buf),
+                        map(ev => ev.buf),
                         takeUntil(theEnd),
                     )
                     const outputPulls = (pulls: Observable<number>) => output(
                         pulls.pipe(
                             map(pull => ({ streamId, pull })),
-                            map(control => ritp.Frame.encode({ control }).finish()),
+                            map(event => ritp.Frame.encode({ event }).finish()),
                         )
                     )
                     const path = request.path
@@ -236,8 +206,6 @@ export const init = (connector: Connector, myInfo: ritp.IPeerInfo): Observable<P
                 remoteInfo,
                 stream,
                 register,
-                // outputEvents,
-                // outputControls,
             }
         }),
     )),

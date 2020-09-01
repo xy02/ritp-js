@@ -1,4 +1,4 @@
-const path = require('path');
+// const path = require('path');
 
 // const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
@@ -35,7 +35,7 @@ module.exports = {
     // },
 
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        //path: path.resolve(__dirname, 'dist'),
         filename: 'index.js',
         library: 'ritp_js',
         libraryTarget: 'umd',

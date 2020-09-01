@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
     "declaration": true,
     "removeComments": true,
     "sourceMap": true,
@@ -10,7 +9,9 @@
       "dom"
     ],
     "target": "esnext",
-    "allowJs": true,
     "moduleResolution": "node",
-  }
+  },
+  "include": [
+    "./src/**/*"
+  ]
 }

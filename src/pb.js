@@ -267,9 +267,7 @@ $root.ritp = (function() {
          * @interface IFrame
          * @property {ritp.IDisconnect|null} [disconnect] Frame disconnect
          * @property {number|null} [pull] Frame pull
-         * @property {ritp.IRequest|null} [request] Frame request
-         * @property {ritp.IControl|null} [control] Frame control
-         * @property {ritp.IData|null} [data] Frame data
+         * @property {ritp.IEvent|null} [event] Frame event
          */
 
         /**
@@ -304,40 +302,24 @@ $root.ritp = (function() {
         Frame.prototype.pull = 0;
 
         /**
-         * Frame request.
-         * @member {ritp.IRequest|null|undefined} request
+         * Frame event.
+         * @member {ritp.IEvent|null|undefined} event
          * @memberof ritp.Frame
          * @instance
          */
-        Frame.prototype.request = null;
-
-        /**
-         * Frame control.
-         * @member {ritp.IControl|null|undefined} control
-         * @memberof ritp.Frame
-         * @instance
-         */
-        Frame.prototype.control = null;
-
-        /**
-         * Frame data.
-         * @member {ritp.IData|null|undefined} data
-         * @memberof ritp.Frame
-         * @instance
-         */
-        Frame.prototype.data = null;
+        Frame.prototype.event = null;
 
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields;
 
         /**
          * Frame type.
-         * @member {"disconnect"|"pull"|"request"|"control"|"data"|undefined} type
+         * @member {"disconnect"|"pull"|"event"|undefined} type
          * @memberof ritp.Frame
          * @instance
          */
         Object.defineProperty(Frame.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["disconnect", "pull", "request", "control", "data"]),
+            get: $util.oneOfGetter($oneOfFields = ["disconnect", "pull", "event"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -369,12 +351,8 @@ $root.ritp = (function() {
                 $root.ritp.Disconnect.encode(message.disconnect, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.pull != null && Object.hasOwnProperty.call(message, "pull"))
                 writer.uint32(/* id 2, wireType 0 =*/16).uint32(message.pull);
-            if (message.request != null && Object.hasOwnProperty.call(message, "request"))
-                $root.ritp.Request.encode(message.request, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-            if (message.control != null && Object.hasOwnProperty.call(message, "control"))
-                $root.ritp.Control.encode(message.control, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
-            if (message.data != null && Object.hasOwnProperty.call(message, "data"))
-                $root.ritp.Data.encode(message.data, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+            if (message.event != null && Object.hasOwnProperty.call(message, "event"))
+                $root.ritp.Event.encode(message.event, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
             return writer;
         };
 
@@ -416,13 +394,7 @@ $root.ritp = (function() {
                     message.pull = reader.uint32();
                     break;
                 case 3:
-                    message.request = $root.ritp.Request.decode(reader, reader.uint32());
-                    break;
-                case 4:
-                    message.control = $root.ritp.Control.decode(reader, reader.uint32());
-                    break;
-                case 5:
-                    message.data = $root.ritp.Data.decode(reader, reader.uint32());
+                    message.event = $root.ritp.Event.decode(reader, reader.uint32());
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -475,34 +447,14 @@ $root.ritp = (function() {
                 if (!$util.isInteger(message.pull))
                     return "pull: integer expected";
             }
-            if (message.request != null && message.hasOwnProperty("request")) {
+            if (message.event != null && message.hasOwnProperty("event")) {
                 if (properties.type === 1)
                     return "type: multiple values";
                 properties.type = 1;
                 {
-                    var error = $root.ritp.Request.verify(message.request);
+                    var error = $root.ritp.Event.verify(message.event);
                     if (error)
-                        return "request." + error;
-                }
-            }
-            if (message.control != null && message.hasOwnProperty("control")) {
-                if (properties.type === 1)
-                    return "type: multiple values";
-                properties.type = 1;
-                {
-                    var error = $root.ritp.Control.verify(message.control);
-                    if (error)
-                        return "control." + error;
-                }
-            }
-            if (message.data != null && message.hasOwnProperty("data")) {
-                if (properties.type === 1)
-                    return "type: multiple values";
-                properties.type = 1;
-                {
-                    var error = $root.ritp.Data.verify(message.data);
-                    if (error)
-                        return "data." + error;
+                        return "event." + error;
                 }
             }
             return null;
@@ -527,20 +479,10 @@ $root.ritp = (function() {
             }
             if (object.pull != null)
                 message.pull = object.pull >>> 0;
-            if (object.request != null) {
-                if (typeof object.request !== "object")
-                    throw TypeError(".ritp.Frame.request: object expected");
-                message.request = $root.ritp.Request.fromObject(object.request);
-            }
-            if (object.control != null) {
-                if (typeof object.control !== "object")
-                    throw TypeError(".ritp.Frame.control: object expected");
-                message.control = $root.ritp.Control.fromObject(object.control);
-            }
-            if (object.data != null) {
-                if (typeof object.data !== "object")
-                    throw TypeError(".ritp.Frame.data: object expected");
-                message.data = $root.ritp.Data.fromObject(object.data);
+            if (object.event != null) {
+                if (typeof object.event !== "object")
+                    throw TypeError(".ritp.Frame.event: object expected");
+                message.event = $root.ritp.Event.fromObject(object.event);
             }
             return message;
         };
@@ -568,20 +510,10 @@ $root.ritp = (function() {
                 if (options.oneofs)
                     object.type = "pull";
             }
-            if (message.request != null && message.hasOwnProperty("request")) {
-                object.request = $root.ritp.Request.toObject(message.request, options);
+            if (message.event != null && message.hasOwnProperty("event")) {
+                object.event = $root.ritp.Event.toObject(message.event, options);
                 if (options.oneofs)
-                    object.type = "request";
-            }
-            if (message.control != null && message.hasOwnProperty("control")) {
-                object.control = $root.ritp.Control.toObject(message.control, options);
-                if (options.oneofs)
-                    object.type = "control";
-            }
-            if (message.data != null && message.hasOwnProperty("data")) {
-                object.data = $root.ritp.Data.toObject(message.data, options);
-                if (options.oneofs)
-                    object.type = "data";
+                    object.type = "event";
             }
             return object;
         };
@@ -760,13 +692,387 @@ $root.ritp = (function() {
         return Disconnect;
     })();
 
+    ritp.Event = (function() {
+
+        /**
+         * Properties of an Event.
+         * @memberof ritp
+         * @interface IEvent
+         * @property {number|Long|null} [streamId] Event streamId
+         * @property {ritp.IRequest|null} [request] Event request
+         * @property {ritp.IClose|null} [close] Event close
+         * @property {number|null} [pull] Event pull
+         * @property {Uint8Array|null} [buf] Event buf
+         * @property {ritp.IEnd|null} [end] Event end
+         */
+
+        /**
+         * Constructs a new Event.
+         * @memberof ritp
+         * @classdesc Represents an Event.
+         * @implements IEvent
+         * @constructor
+         * @param {ritp.IEvent=} [properties] Properties to set
+         */
+        function Event(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Event streamId.
+         * @member {number|Long} streamId
+         * @memberof ritp.Event
+         * @instance
+         */
+        Event.prototype.streamId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+        /**
+         * Event request.
+         * @member {ritp.IRequest|null|undefined} request
+         * @memberof ritp.Event
+         * @instance
+         */
+        Event.prototype.request = null;
+
+        /**
+         * Event close.
+         * @member {ritp.IClose|null|undefined} close
+         * @memberof ritp.Event
+         * @instance
+         */
+        Event.prototype.close = null;
+
+        /**
+         * Event pull.
+         * @member {number} pull
+         * @memberof ritp.Event
+         * @instance
+         */
+        Event.prototype.pull = 0;
+
+        /**
+         * Event buf.
+         * @member {Uint8Array} buf
+         * @memberof ritp.Event
+         * @instance
+         */
+        Event.prototype.buf = $util.newBuffer([]);
+
+        /**
+         * Event end.
+         * @member {ritp.IEnd|null|undefined} end
+         * @memberof ritp.Event
+         * @instance
+         */
+        Event.prototype.end = null;
+
+        // OneOf field names bound to virtual getters and setters
+        var $oneOfFields;
+
+        /**
+         * Event type.
+         * @member {"request"|"close"|"pull"|"buf"|"end"|undefined} type
+         * @memberof ritp.Event
+         * @instance
+         */
+        Object.defineProperty(Event.prototype, "type", {
+            get: $util.oneOfGetter($oneOfFields = ["request", "close", "pull", "buf", "end"]),
+            set: $util.oneOfSetter($oneOfFields)
+        });
+
+        /**
+         * Creates a new Event instance using the specified properties.
+         * @function create
+         * @memberof ritp.Event
+         * @static
+         * @param {ritp.IEvent=} [properties] Properties to set
+         * @returns {ritp.Event} Event instance
+         */
+        Event.create = function create(properties) {
+            return new Event(properties);
+        };
+
+        /**
+         * Encodes the specified Event message. Does not implicitly {@link ritp.Event.verify|verify} messages.
+         * @function encode
+         * @memberof ritp.Event
+         * @static
+         * @param {ritp.IEvent} message Event message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Event.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.streamId != null && Object.hasOwnProperty.call(message, "streamId"))
+                writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.streamId);
+            if (message.request != null && Object.hasOwnProperty.call(message, "request"))
+                $root.ritp.Request.encode(message.request, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.close != null && Object.hasOwnProperty.call(message, "close"))
+                $root.ritp.Close.encode(message.close, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+            if (message.pull != null && Object.hasOwnProperty.call(message, "pull"))
+                writer.uint32(/* id 4, wireType 0 =*/32).uint32(message.pull);
+            if (message.buf != null && Object.hasOwnProperty.call(message, "buf"))
+                writer.uint32(/* id 5, wireType 2 =*/42).bytes(message.buf);
+            if (message.end != null && Object.hasOwnProperty.call(message, "end"))
+                $root.ritp.End.encode(message.end, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified Event message, length delimited. Does not implicitly {@link ritp.Event.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof ritp.Event
+         * @static
+         * @param {ritp.IEvent} message Event message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Event.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes an Event message from the specified reader or buffer.
+         * @function decode
+         * @memberof ritp.Event
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {ritp.Event} Event
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Event.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Event();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.streamId = reader.uint64();
+                    break;
+                case 2:
+                    message.request = $root.ritp.Request.decode(reader, reader.uint32());
+                    break;
+                case 3:
+                    message.close = $root.ritp.Close.decode(reader, reader.uint32());
+                    break;
+                case 4:
+                    message.pull = reader.uint32();
+                    break;
+                case 5:
+                    message.buf = reader.bytes();
+                    break;
+                case 6:
+                    message.end = $root.ritp.End.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes an Event message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof ritp.Event
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {ritp.Event} Event
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Event.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies an Event message.
+         * @function verify
+         * @memberof ritp.Event
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        Event.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            var properties = {};
+            if (message.streamId != null && message.hasOwnProperty("streamId"))
+                if (!$util.isInteger(message.streamId) && !(message.streamId && $util.isInteger(message.streamId.low) && $util.isInteger(message.streamId.high)))
+                    return "streamId: integer|Long expected";
+            if (message.request != null && message.hasOwnProperty("request")) {
+                properties.type = 1;
+                {
+                    var error = $root.ritp.Request.verify(message.request);
+                    if (error)
+                        return "request." + error;
+                }
+            }
+            if (message.close != null && message.hasOwnProperty("close")) {
+                if (properties.type === 1)
+                    return "type: multiple values";
+                properties.type = 1;
+                {
+                    var error = $root.ritp.Close.verify(message.close);
+                    if (error)
+                        return "close." + error;
+                }
+            }
+            if (message.pull != null && message.hasOwnProperty("pull")) {
+                if (properties.type === 1)
+                    return "type: multiple values";
+                properties.type = 1;
+                if (!$util.isInteger(message.pull))
+                    return "pull: integer expected";
+            }
+            if (message.buf != null && message.hasOwnProperty("buf")) {
+                if (properties.type === 1)
+                    return "type: multiple values";
+                properties.type = 1;
+                if (!(message.buf && typeof message.buf.length === "number" || $util.isString(message.buf)))
+                    return "buf: buffer expected";
+            }
+            if (message.end != null && message.hasOwnProperty("end")) {
+                if (properties.type === 1)
+                    return "type: multiple values";
+                properties.type = 1;
+                {
+                    var error = $root.ritp.End.verify(message.end);
+                    if (error)
+                        return "end." + error;
+                }
+            }
+            return null;
+        };
+
+        /**
+         * Creates an Event message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof ritp.Event
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {ritp.Event} Event
+         */
+        Event.fromObject = function fromObject(object) {
+            if (object instanceof $root.ritp.Event)
+                return object;
+            var message = new $root.ritp.Event();
+            if (object.streamId != null)
+                if ($util.Long)
+                    (message.streamId = $util.Long.fromValue(object.streamId)).unsigned = true;
+                else if (typeof object.streamId === "string")
+                    message.streamId = parseInt(object.streamId, 10);
+                else if (typeof object.streamId === "number")
+                    message.streamId = object.streamId;
+                else if (typeof object.streamId === "object")
+                    message.streamId = new $util.LongBits(object.streamId.low >>> 0, object.streamId.high >>> 0).toNumber(true);
+            if (object.request != null) {
+                if (typeof object.request !== "object")
+                    throw TypeError(".ritp.Event.request: object expected");
+                message.request = $root.ritp.Request.fromObject(object.request);
+            }
+            if (object.close != null) {
+                if (typeof object.close !== "object")
+                    throw TypeError(".ritp.Event.close: object expected");
+                message.close = $root.ritp.Close.fromObject(object.close);
+            }
+            if (object.pull != null)
+                message.pull = object.pull >>> 0;
+            if (object.buf != null)
+                if (typeof object.buf === "string")
+                    $util.base64.decode(object.buf, message.buf = $util.newBuffer($util.base64.length(object.buf)), 0);
+                else if (object.buf.length)
+                    message.buf = object.buf;
+            if (object.end != null) {
+                if (typeof object.end !== "object")
+                    throw TypeError(".ritp.Event.end: object expected");
+                message.end = $root.ritp.End.fromObject(object.end);
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from an Event message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof ritp.Event
+         * @static
+         * @param {ritp.Event} message Event
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        Event.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                if ($util.Long) {
+                    var long = new $util.Long(0, 0, true);
+                    object.streamId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+                } else
+                    object.streamId = options.longs === String ? "0" : 0;
+            if (message.streamId != null && message.hasOwnProperty("streamId"))
+                if (typeof message.streamId === "number")
+                    object.streamId = options.longs === String ? String(message.streamId) : message.streamId;
+                else
+                    object.streamId = options.longs === String ? $util.Long.prototype.toString.call(message.streamId) : options.longs === Number ? new $util.LongBits(message.streamId.low >>> 0, message.streamId.high >>> 0).toNumber(true) : message.streamId;
+            if (message.request != null && message.hasOwnProperty("request")) {
+                object.request = $root.ritp.Request.toObject(message.request, options);
+                if (options.oneofs)
+                    object.type = "request";
+            }
+            if (message.close != null && message.hasOwnProperty("close")) {
+                object.close = $root.ritp.Close.toObject(message.close, options);
+                if (options.oneofs)
+                    object.type = "close";
+            }
+            if (message.pull != null && message.hasOwnProperty("pull")) {
+                object.pull = message.pull;
+                if (options.oneofs)
+                    object.type = "pull";
+            }
+            if (message.buf != null && message.hasOwnProperty("buf")) {
+                object.buf = options.bytes === String ? $util.base64.encode(message.buf, 0, message.buf.length) : options.bytes === Array ? Array.prototype.slice.call(message.buf) : message.buf;
+                if (options.oneofs)
+                    object.type = "buf";
+            }
+            if (message.end != null && message.hasOwnProperty("end")) {
+                object.end = $root.ritp.End.toObject(message.end, options);
+                if (options.oneofs)
+                    object.type = "end";
+            }
+            return object;
+        };
+
+        /**
+         * Converts this Event to JSON.
+         * @function toJSON
+         * @memberof ritp.Event
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        Event.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return Event;
+    })();
+
     ritp.Request = (function() {
 
         /**
          * Properties of a Request.
          * @memberof ritp
          * @interface IRequest
-         * @property {number|Long|null} [streamId] Request streamId
          * @property {string|null} [path] Request path
          * @property {Uint8Array|null} [info] Request info
          * @property {string|null} [infoType] Request infoType
@@ -787,14 +1093,6 @@ $root.ritp = (function() {
                     if (properties[keys[i]] != null)
                         this[keys[i]] = properties[keys[i]];
         }
-
-        /**
-         * Request streamId.
-         * @member {number|Long} streamId
-         * @memberof ritp.Request
-         * @instance
-         */
-        Request.prototype.streamId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
 
         /**
          * Request path.
@@ -852,16 +1150,14 @@ $root.ritp = (function() {
         Request.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.streamId != null && Object.hasOwnProperty.call(message, "streamId"))
-                writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.streamId);
             if (message.path != null && Object.hasOwnProperty.call(message, "path"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.path);
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.path);
             if (message.info != null && Object.hasOwnProperty.call(message, "info"))
-                writer.uint32(/* id 3, wireType 2 =*/26).bytes(message.info);
+                writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.info);
             if (message.infoType != null && Object.hasOwnProperty.call(message, "infoType"))
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.infoType);
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.infoType);
             if (message.bufType != null && Object.hasOwnProperty.call(message, "bufType"))
-                writer.uint32(/* id 5, wireType 2 =*/42).string(message.bufType);
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.bufType);
             return writer;
         };
 
@@ -897,18 +1193,15 @@ $root.ritp = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.streamId = reader.uint64();
-                    break;
-                case 2:
                     message.path = reader.string();
                     break;
-                case 3:
+                case 2:
                     message.info = reader.bytes();
                     break;
-                case 4:
+                case 3:
                     message.infoType = reader.string();
                     break;
-                case 5:
+                case 4:
                     message.bufType = reader.string();
                     break;
                 default:
@@ -946,9 +1239,6 @@ $root.ritp = (function() {
         Request.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (!$util.isInteger(message.streamId) && !(message.streamId && $util.isInteger(message.streamId.low) && $util.isInteger(message.streamId.high)))
-                    return "streamId: integer|Long expected";
             if (message.path != null && message.hasOwnProperty("path"))
                 if (!$util.isString(message.path))
                     return "path: string expected";
@@ -976,15 +1266,6 @@ $root.ritp = (function() {
             if (object instanceof $root.ritp.Request)
                 return object;
             var message = new $root.ritp.Request();
-            if (object.streamId != null)
-                if ($util.Long)
-                    (message.streamId = $util.Long.fromValue(object.streamId)).unsigned = true;
-                else if (typeof object.streamId === "string")
-                    message.streamId = parseInt(object.streamId, 10);
-                else if (typeof object.streamId === "number")
-                    message.streamId = object.streamId;
-                else if (typeof object.streamId === "object")
-                    message.streamId = new $util.LongBits(object.streamId.low >>> 0, object.streamId.high >>> 0).toNumber(true);
             if (object.path != null)
                 message.path = String(object.path);
             if (object.info != null)
@@ -1013,11 +1294,6 @@ $root.ritp = (function() {
                 options = {};
             var object = {};
             if (options.defaults) {
-                if ($util.Long) {
-                    var long = new $util.Long(0, 0, true);
-                    object.streamId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
-                } else
-                    object.streamId = options.longs === String ? "0" : 0;
                 object.path = "";
                 if (options.bytes === String)
                     object.info = "";
@@ -1029,11 +1305,6 @@ $root.ritp = (function() {
                 object.infoType = "";
                 object.bufType = "";
             }
-            if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (typeof message.streamId === "number")
-                    object.streamId = options.longs === String ? String(message.streamId) : message.streamId;
-                else
-                    object.streamId = options.longs === String ? $util.Long.prototype.toString.call(message.streamId) : options.longs === Number ? new $util.LongBits(message.streamId.low >>> 0, message.streamId.high >>> 0).toNumber(true) : message.streamId;
             if (message.path != null && message.hasOwnProperty("path"))
                 object.path = message.path;
             if (message.info != null && message.hasOwnProperty("info"))
@@ -1057,282 +1328,6 @@ $root.ritp = (function() {
         };
 
         return Request;
-    })();
-
-    ritp.Control = (function() {
-
-        /**
-         * Properties of a Control.
-         * @memberof ritp
-         * @interface IControl
-         * @property {number|Long|null} [streamId] Control streamId
-         * @property {ritp.IClose|null} [close] Control close
-         * @property {number|null} [pull] Control pull
-         */
-
-        /**
-         * Constructs a new Control.
-         * @memberof ritp
-         * @classdesc Represents a Control.
-         * @implements IControl
-         * @constructor
-         * @param {ritp.IControl=} [properties] Properties to set
-         */
-        function Control(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * Control streamId.
-         * @member {number|Long} streamId
-         * @memberof ritp.Control
-         * @instance
-         */
-        Control.prototype.streamId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
-
-        /**
-         * Control close.
-         * @member {ritp.IClose|null|undefined} close
-         * @memberof ritp.Control
-         * @instance
-         */
-        Control.prototype.close = null;
-
-        /**
-         * Control pull.
-         * @member {number} pull
-         * @memberof ritp.Control
-         * @instance
-         */
-        Control.prototype.pull = 0;
-
-        // OneOf field names bound to virtual getters and setters
-        var $oneOfFields;
-
-        /**
-         * Control type.
-         * @member {"close"|"pull"|undefined} type
-         * @memberof ritp.Control
-         * @instance
-         */
-        Object.defineProperty(Control.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["close", "pull"]),
-            set: $util.oneOfSetter($oneOfFields)
-        });
-
-        /**
-         * Creates a new Control instance using the specified properties.
-         * @function create
-         * @memberof ritp.Control
-         * @static
-         * @param {ritp.IControl=} [properties] Properties to set
-         * @returns {ritp.Control} Control instance
-         */
-        Control.create = function create(properties) {
-            return new Control(properties);
-        };
-
-        /**
-         * Encodes the specified Control message. Does not implicitly {@link ritp.Control.verify|verify} messages.
-         * @function encode
-         * @memberof ritp.Control
-         * @static
-         * @param {ritp.IControl} message Control message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Control.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.streamId != null && Object.hasOwnProperty.call(message, "streamId"))
-                writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.streamId);
-            if (message.close != null && Object.hasOwnProperty.call(message, "close"))
-                $root.ritp.Close.encode(message.close, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
-            if (message.pull != null && Object.hasOwnProperty.call(message, "pull"))
-                writer.uint32(/* id 3, wireType 0 =*/24).uint32(message.pull);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified Control message, length delimited. Does not implicitly {@link ritp.Control.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof ritp.Control
-         * @static
-         * @param {ritp.IControl} message Control message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Control.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a Control message from the specified reader or buffer.
-         * @function decode
-         * @memberof ritp.Control
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {ritp.Control} Control
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Control.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Control();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.streamId = reader.uint64();
-                    break;
-                case 2:
-                    message.close = $root.ritp.Close.decode(reader, reader.uint32());
-                    break;
-                case 3:
-                    message.pull = reader.uint32();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a Control message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof ritp.Control
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {ritp.Control} Control
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Control.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a Control message.
-         * @function verify
-         * @memberof ritp.Control
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        Control.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            var properties = {};
-            if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (!$util.isInteger(message.streamId) && !(message.streamId && $util.isInteger(message.streamId.low) && $util.isInteger(message.streamId.high)))
-                    return "streamId: integer|Long expected";
-            if (message.close != null && message.hasOwnProperty("close")) {
-                properties.type = 1;
-                {
-                    var error = $root.ritp.Close.verify(message.close);
-                    if (error)
-                        return "close." + error;
-                }
-            }
-            if (message.pull != null && message.hasOwnProperty("pull")) {
-                if (properties.type === 1)
-                    return "type: multiple values";
-                properties.type = 1;
-                if (!$util.isInteger(message.pull))
-                    return "pull: integer expected";
-            }
-            return null;
-        };
-
-        /**
-         * Creates a Control message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof ritp.Control
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {ritp.Control} Control
-         */
-        Control.fromObject = function fromObject(object) {
-            if (object instanceof $root.ritp.Control)
-                return object;
-            var message = new $root.ritp.Control();
-            if (object.streamId != null)
-                if ($util.Long)
-                    (message.streamId = $util.Long.fromValue(object.streamId)).unsigned = true;
-                else if (typeof object.streamId === "string")
-                    message.streamId = parseInt(object.streamId, 10);
-                else if (typeof object.streamId === "number")
-                    message.streamId = object.streamId;
-                else if (typeof object.streamId === "object")
-                    message.streamId = new $util.LongBits(object.streamId.low >>> 0, object.streamId.high >>> 0).toNumber(true);
-            if (object.close != null) {
-                if (typeof object.close !== "object")
-                    throw TypeError(".ritp.Control.close: object expected");
-                message.close = $root.ritp.Close.fromObject(object.close);
-            }
-            if (object.pull != null)
-                message.pull = object.pull >>> 0;
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a Control message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof ritp.Control
-         * @static
-         * @param {ritp.Control} message Control
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        Control.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults)
-                if ($util.Long) {
-                    var long = new $util.Long(0, 0, true);
-                    object.streamId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
-                } else
-                    object.streamId = options.longs === String ? "0" : 0;
-            if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (typeof message.streamId === "number")
-                    object.streamId = options.longs === String ? String(message.streamId) : message.streamId;
-                else
-                    object.streamId = options.longs === String ? $util.Long.prototype.toString.call(message.streamId) : options.longs === Number ? new $util.LongBits(message.streamId.low >>> 0, message.streamId.high >>> 0).toNumber(true) : message.streamId;
-            if (message.close != null && message.hasOwnProperty("close")) {
-                object.close = $root.ritp.Close.toObject(message.close, options);
-                if (options.oneofs)
-                    object.type = "close";
-            }
-            if (message.pull != null && message.hasOwnProperty("pull")) {
-                object.pull = message.pull;
-                if (options.oneofs)
-                    object.type = "pull";
-            }
-            return object;
-        };
-
-        /**
-         * Converts this Control to JSON.
-         * @function toJSON
-         * @memberof ritp.Control
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        Control.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return Control;
     })();
 
     ritp.Close = (function() {
@@ -1570,285 +1565,6 @@ $root.ritp = (function() {
         })();
 
         return Close;
-    })();
-
-    ritp.Data = (function() {
-
-        /**
-         * Properties of a Data.
-         * @memberof ritp
-         * @interface IData
-         * @property {number|Long|null} [streamId] Data streamId
-         * @property {ritp.IEnd|null} [end] Data end
-         * @property {Uint8Array|null} [buf] Data buf
-         */
-
-        /**
-         * Constructs a new Data.
-         * @memberof ritp
-         * @classdesc Represents a Data.
-         * @implements IData
-         * @constructor
-         * @param {ritp.IData=} [properties] Properties to set
-         */
-        function Data(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * Data streamId.
-         * @member {number|Long} streamId
-         * @memberof ritp.Data
-         * @instance
-         */
-        Data.prototype.streamId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
-
-        /**
-         * Data end.
-         * @member {ritp.IEnd|null|undefined} end
-         * @memberof ritp.Data
-         * @instance
-         */
-        Data.prototype.end = null;
-
-        /**
-         * Data buf.
-         * @member {Uint8Array} buf
-         * @memberof ritp.Data
-         * @instance
-         */
-        Data.prototype.buf = $util.newBuffer([]);
-
-        // OneOf field names bound to virtual getters and setters
-        var $oneOfFields;
-
-        /**
-         * Data type.
-         * @member {"end"|"buf"|undefined} type
-         * @memberof ritp.Data
-         * @instance
-         */
-        Object.defineProperty(Data.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["end", "buf"]),
-            set: $util.oneOfSetter($oneOfFields)
-        });
-
-        /**
-         * Creates a new Data instance using the specified properties.
-         * @function create
-         * @memberof ritp.Data
-         * @static
-         * @param {ritp.IData=} [properties] Properties to set
-         * @returns {ritp.Data} Data instance
-         */
-        Data.create = function create(properties) {
-            return new Data(properties);
-        };
-
-        /**
-         * Encodes the specified Data message. Does not implicitly {@link ritp.Data.verify|verify} messages.
-         * @function encode
-         * @memberof ritp.Data
-         * @static
-         * @param {ritp.IData} message Data message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Data.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.streamId != null && Object.hasOwnProperty.call(message, "streamId"))
-                writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.streamId);
-            if (message.end != null && Object.hasOwnProperty.call(message, "end"))
-                $root.ritp.End.encode(message.end, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
-            if (message.buf != null && Object.hasOwnProperty.call(message, "buf"))
-                writer.uint32(/* id 3, wireType 2 =*/26).bytes(message.buf);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified Data message, length delimited. Does not implicitly {@link ritp.Data.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof ritp.Data
-         * @static
-         * @param {ritp.IData} message Data message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Data.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a Data message from the specified reader or buffer.
-         * @function decode
-         * @memberof ritp.Data
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {ritp.Data} Data
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Data.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Data();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.streamId = reader.uint64();
-                    break;
-                case 2:
-                    message.end = $root.ritp.End.decode(reader, reader.uint32());
-                    break;
-                case 3:
-                    message.buf = reader.bytes();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a Data message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof ritp.Data
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {ritp.Data} Data
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Data.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a Data message.
-         * @function verify
-         * @memberof ritp.Data
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        Data.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            var properties = {};
-            if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (!$util.isInteger(message.streamId) && !(message.streamId && $util.isInteger(message.streamId.low) && $util.isInteger(message.streamId.high)))
-                    return "streamId: integer|Long expected";
-            if (message.end != null && message.hasOwnProperty("end")) {
-                properties.type = 1;
-                {
-                    var error = $root.ritp.End.verify(message.end);
-                    if (error)
-                        return "end." + error;
-                }
-            }
-            if (message.buf != null && message.hasOwnProperty("buf")) {
-                if (properties.type === 1)
-                    return "type: multiple values";
-                properties.type = 1;
-                if (!(message.buf && typeof message.buf.length === "number" || $util.isString(message.buf)))
-                    return "buf: buffer expected";
-            }
-            return null;
-        };
-
-        /**
-         * Creates a Data message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof ritp.Data
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {ritp.Data} Data
-         */
-        Data.fromObject = function fromObject(object) {
-            if (object instanceof $root.ritp.Data)
-                return object;
-            var message = new $root.ritp.Data();
-            if (object.streamId != null)
-                if ($util.Long)
-                    (message.streamId = $util.Long.fromValue(object.streamId)).unsigned = true;
-                else if (typeof object.streamId === "string")
-                    message.streamId = parseInt(object.streamId, 10);
-                else if (typeof object.streamId === "number")
-                    message.streamId = object.streamId;
-                else if (typeof object.streamId === "object")
-                    message.streamId = new $util.LongBits(object.streamId.low >>> 0, object.streamId.high >>> 0).toNumber(true);
-            if (object.end != null) {
-                if (typeof object.end !== "object")
-                    throw TypeError(".ritp.Data.end: object expected");
-                message.end = $root.ritp.End.fromObject(object.end);
-            }
-            if (object.buf != null)
-                if (typeof object.buf === "string")
-                    $util.base64.decode(object.buf, message.buf = $util.newBuffer($util.base64.length(object.buf)), 0);
-                else if (object.buf.length)
-                    message.buf = object.buf;
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a Data message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof ritp.Data
-         * @static
-         * @param {ritp.Data} message Data
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        Data.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults)
-                if ($util.Long) {
-                    var long = new $util.Long(0, 0, true);
-                    object.streamId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
-                } else
-                    object.streamId = options.longs === String ? "0" : 0;
-            if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (typeof message.streamId === "number")
-                    object.streamId = options.longs === String ? String(message.streamId) : message.streamId;
-                else
-                    object.streamId = options.longs === String ? $util.Long.prototype.toString.call(message.streamId) : options.longs === Number ? new $util.LongBits(message.streamId.low >>> 0, message.streamId.high >>> 0).toNumber(true) : message.streamId;
-            if (message.end != null && message.hasOwnProperty("end")) {
-                object.end = $root.ritp.End.toObject(message.end, options);
-                if (options.oneofs)
-                    object.type = "end";
-            }
-            if (message.buf != null && message.hasOwnProperty("buf")) {
-                object.buf = options.bytes === String ? $util.base64.encode(message.buf, 0, message.buf.length) : options.bytes === Array ? Array.prototype.slice.call(message.buf) : message.buf;
-                if (options.oneofs)
-                    object.type = "buf";
-            }
-            return object;
-        };
-
-        /**
-         * Converts this Data to JSON.
-         * @function toJSON
-         * @memberof ritp.Data
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        Data.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return Data;
     })();
 
     ritp.End = (function() {

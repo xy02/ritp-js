@@ -1,12 +1,9 @@
 import { Observable } from 'rxjs';
 import { ritp } from "./pb";
-declare type Output = (bufs: Observable<Uint8Array>) => void;
-export interface Connector {
-    (onUnsubscribe: (output: Output) => void): Observable<Connection>;
-}
 export interface Connection {
-    receiver: Observable<Uint8Array>;
+    buffers: Observable<Uint8Array>;
     output: (bufs: Observable<Uint8Array>) => void;
+    onUnsubscribe: Observable<void>;
 }
 export interface Peer {
     remoteInfo: ritp.IPeerInfo;
@@ -19,11 +16,9 @@ export interface Stream {
     outputBufs: (bufs: Observable<Uint8Array>) => void;
 }
 export interface StreamRequest {
-    path: string;
     request: ritp.IRequest;
     bufs: Observable<Uint8Array>;
     outputPulls: (pulls: Observable<number>) => void;
 }
-export declare const h5WsConnector: (url: string) => (onUnsubscribe: (output: Output) => void) => Observable<Connection>;
-export declare const init: (connector: Connector, myInfo: ritp.IPeerInfo) => Observable<Peer>;
-export {};
+export declare const h5WsConnection: (url: string) => Observable<Connection>;
+export declare const init: (connection: Observable<Connection>, myInfo: ritp.IPeerInfo) => Observable<Peer>;

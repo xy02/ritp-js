@@ -4,29 +4,9 @@
 <script src="./dist/index.js"></script>
 <script src="./node_modules/rxjs/bundles/rxjs.umd.min.js"></script>
 <script>
-    const { of, from } = rxjs
-    const { startWith, flatMap, find, concatMap } = rxjs.operators
-
-    const arr = [{ id: 1, children: [{ id: 2, name: 'lucky', children: [{ id: 6, name: 'x' }] }] }, { id: 5, name: 123 ,children: [{ id: 7, name: 'x' }]}]
-    const fromArr = (arr, children) => from(arr).pipe(
-        flatMap(obj => obj[children] instanceof Array ?
-            fromArr(obj[children], children).pipe(
-                startWith(obj)
-            ) : of(obj)
-        )
-    )
-    const search = (arr = [], children = 'children') => (key, value) => fromArr(arr, children).pipe(
-        find(obj => obj[key] === value)
-    )
-    const searchArr = search(arr)
-    searchArr('id', 7).subscribe(console.log)
-    searchArr('name', 'x').subscribe(console.log)
-</script>
-<script>
-    // const { of, from, Observable, interval } = rxjs;
-    // const { startWith, catchError, delay, repeat, flatMap,map, tap, merge, shareReplay,share, take, groupBy, find, takeUntil,finalize } = rxjs.operators;
-    const socket = ritp_js.createH5WebSocket('ws://localhost:8000/')
-
+    const { of, from, Observable, interval } = rxjs;
+    const { startWith, catchError, delay, repeat, flatMap,map, tap, merge, shareReplay,share, take, groupBy, find, takeUntil,finalize } = rxjs.operators;
+    
     const parseToChunk = str => new Observable(sub => {
         const b = new Blob([str])
         const fr = new FileReader()
@@ -37,30 +17,25 @@
             sub.complete()
         }
     })
+    const conn = ritp_js.h5WsConnection('ws://localhost:8000/')
     const app = parseToChunk("app1").pipe(
-        // tap(chunk => console.info(chunk)),
-        flatMap(chunk => ritp_js.init({
-            sockets: socket,
-            myInfo: { version: "0.1", chunk },
-        })),
+        flatMap(info => ritp_js.init(conn,{ version: "0.1", info })),
         catchError(err => of().pipe(delay(2000))),
         repeat(),
         flatMap(peer => parseToChunk("request1").pipe(
-            flatMap(chunk => peer.stream({
-                request: request1(chunk),
-                requester: accRequester,
-            })),
+            tap(info => {
+                const stream = peer.stream({path:'acc',info})
+                accRequester(stream)
+            }),
         )),
     )
-    const request1 = chunk => ({
-        handlerName: 'acc',
-        data: chunk,
-    })
-    const accRequester = ({ request, sendableAmount }) => sendableAmount.pipe(
-        flatMap(amount => {
-            console.info('amount', amount)
-            return of(new Uint8Array([amount]))
-        }),
+    const accRequester = ({sendableAmounts,outputBufs}) => outputBufs(
+        sendableAmounts.pipe(
+            flatMap(amount => {
+                console.info('amount', amount)
+                return of(new Uint8Array([amount]))
+            }),
+        )
     )
-    // app.subscribe()
+    app.subscribe()
 </script>

@@ -1,8 +1,11 @@
 {
   "name": "ritp-js",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "an implementation of RITP",
-  "repository": {"type": "git", "url": "https://github.com/xy02/ritp-js.git"},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xy02/ritp-js.git"
+  },
   "main": "./dist/index.js",
   "types": "./src/index.d.ts",
   "scripts": {
@@ -13,7 +16,7 @@
   "author": "Yi",
   "license": "ISC",
   "devDependencies": {
-    "ts-loader": "^8.0.2",
+    "ts-loader": "^8.0.3",
     "typescript": "^3.9.7",
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
