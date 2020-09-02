@@ -11,6 +11,7 @@ export interface Peer {
     register: (path: string) => Observable<StreamRequest>;
 }
 export interface Stream {
+    pulls: Observable<number>;
     sendableAmounts: Observable<number>;
     isSendable: Observable<boolean>;
     outputBufs: (bufs: Observable<Uint8Array>) => void;

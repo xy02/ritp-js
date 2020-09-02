@@ -17,6 +17,7 @@ export interface Peer {
 }
 
 export interface Stream {
+    pulls: Observable<number>
     sendableAmounts: Observable<number>
     isSendable: Observable<boolean>
     outputBufs: (bufs: Observable<Uint8Array>) => void
@@ -123,13 +124,14 @@ export const init = (connection: Observable<Connection>, myInfo: ritp.IPeerInfo)
                     take(1),
                     flatMap(ev => throwError(ev.close)),
                 )
-                const pullsAmounts = groupedPullEventsByStreamId.pipe(
+                const pulls = groupedPullEventsByStreamId.pipe(
                     find(group => group.key == streamId),
                     flatMap(group => group),
-                    scan((acc, ev) => acc + ev.pull, 0),
+                    map(ev => ev.pull),
+                    share(),
                 )
                 const sends = new BehaviorSubject<number>(0)
-                const sendableAmounts = merge(pullsAmounts, sends).pipe(
+                const sendableAmounts = merge(pulls, sends).pipe(
                     scan((acc, num) => acc + num, 0),
                     shareReplay(1),
                     takeUntil(remoteClose),
@@ -152,7 +154,7 @@ export const init = (connection: Observable<Connection>, myInfo: ritp.IPeerInfo)
                         map(event => ritp.Frame.encode({ event }).finish()),
                     )
                 )
-                return { sendableAmounts, outputBufs, isSendable }
+                return { pulls, sendableAmounts, outputBufs, isSendable }
             }
             const groupedEndEventsByStreamId = groupedEventsByType.pipe(
                 find(group => group.key == "end"),

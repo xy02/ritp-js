@@ -1,4 +1,4 @@
-//v0.3.0
+//v0.3.1
 syntax = "proto3";
 
 package ritp;
@@ -39,7 +39,7 @@ message Disconnect {
 */
 message Event {
     //流ID
-    uint64 stream_id = 1;
+    uint32 stream_id = 1;
     oneof type {
         //请求对端开始一条流，本端Requester生产数据，对端Handler消费数据
         Request request = 2;

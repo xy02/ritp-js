@@ -29,13 +29,17 @@
             }),
         )),
     )
-    const accRequester = ({sendableAmounts,outputBufs}) => outputBufs(
-        sendableAmounts.pipe(
-            flatMap(amount => {
-                console.info('amount', amount)
-                return of(new Uint8Array([amount]))
+    const accRequester = ({sendableAmounts,outputBufs, pulls}) => {
+        sendableAmounts.subscribe(
+            amount => console.info('amount', amount)
+        )
+        const bufs = pulls.pipe(
+            flatMap(pull => {
+                console.info('pull', pull)
+                return of(new Uint8Array([pull]))
             }),
         )
-    )
+        outputBufs(bufs)
+    }
     app.subscribe()
 </script>

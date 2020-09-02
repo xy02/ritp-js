@@ -698,7 +698,7 @@ $root.ritp = (function() {
          * Properties of an Event.
          * @memberof ritp
          * @interface IEvent
-         * @property {number|Long|null} [streamId] Event streamId
+         * @property {number|null} [streamId] Event streamId
          * @property {ritp.IRequest|null} [request] Event request
          * @property {ritp.IClose|null} [close] Event close
          * @property {number|null} [pull] Event pull
@@ -723,11 +723,11 @@ $root.ritp = (function() {
 
         /**
          * Event streamId.
-         * @member {number|Long} streamId
+         * @member {number} streamId
          * @memberof ritp.Event
          * @instance
          */
-        Event.prototype.streamId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+        Event.prototype.streamId = 0;
 
         /**
          * Event request.
@@ -808,7 +808,7 @@ $root.ritp = (function() {
             if (!writer)
                 writer = $Writer.create();
             if (message.streamId != null && Object.hasOwnProperty.call(message, "streamId"))
-                writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.streamId);
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.streamId);
             if (message.request != null && Object.hasOwnProperty.call(message, "request"))
                 $root.ritp.Request.encode(message.request, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
             if (message.close != null && Object.hasOwnProperty.call(message, "close"))
@@ -854,7 +854,7 @@ $root.ritp = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.streamId = reader.uint64();
+                    message.streamId = reader.uint32();
                     break;
                 case 2:
                     message.request = $root.ritp.Request.decode(reader, reader.uint32());
@@ -908,8 +908,8 @@ $root.ritp = (function() {
                 return "object expected";
             var properties = {};
             if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (!$util.isInteger(message.streamId) && !(message.streamId && $util.isInteger(message.streamId.low) && $util.isInteger(message.streamId.high)))
-                    return "streamId: integer|Long expected";
+                if (!$util.isInteger(message.streamId))
+                    return "streamId: integer expected";
             if (message.request != null && message.hasOwnProperty("request")) {
                 properties.type = 1;
                 {
@@ -968,14 +968,7 @@ $root.ritp = (function() {
                 return object;
             var message = new $root.ritp.Event();
             if (object.streamId != null)
-                if ($util.Long)
-                    (message.streamId = $util.Long.fromValue(object.streamId)).unsigned = true;
-                else if (typeof object.streamId === "string")
-                    message.streamId = parseInt(object.streamId, 10);
-                else if (typeof object.streamId === "number")
-                    message.streamId = object.streamId;
-                else if (typeof object.streamId === "object")
-                    message.streamId = new $util.LongBits(object.streamId.low >>> 0, object.streamId.high >>> 0).toNumber(true);
+                message.streamId = object.streamId >>> 0;
             if (object.request != null) {
                 if (typeof object.request !== "object")
                     throw TypeError(".ritp.Event.request: object expected");
@@ -1015,16 +1008,9 @@ $root.ritp = (function() {
                 options = {};
             var object = {};
             if (options.defaults)
-                if ($util.Long) {
-                    var long = new $util.Long(0, 0, true);
-                    object.streamId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
-                } else
-                    object.streamId = options.longs === String ? "0" : 0;
+                object.streamId = 0;
             if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (typeof message.streamId === "number")
-                    object.streamId = options.longs === String ? String(message.streamId) : message.streamId;
-                else
-                    object.streamId = options.longs === String ? $util.Long.prototype.toString.call(message.streamId) : options.longs === Number ? new $util.LongBits(message.streamId.low >>> 0, message.streamId.high >>> 0).toNumber(true) : message.streamId;
+                object.streamId = message.streamId;
             if (message.request != null && message.hasOwnProperty("request")) {
                 object.request = $root.ritp.Request.toObject(message.request, options);
                 if (options.oneofs)

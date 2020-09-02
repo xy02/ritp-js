@@ -297,7 +297,7 @@ export namespace ritp {
     interface IEvent {
 
         /** Event streamId */
-        streamId?: (number|Long|null);
+        streamId?: (number|null);
 
         /** Event request */
         request?: (ritp.IRequest|null);
@@ -325,7 +325,7 @@ export namespace ritp {
         constructor(properties?: ritp.IEvent);
 
         /** Event streamId. */
-        public streamId: (number|Long);
+        public streamId: number;
 
         /** Event request. */
         public request?: (ritp.IRequest|null);
