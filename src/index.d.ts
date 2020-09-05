@@ -1,12 +1,13 @@
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { ritp } from "./pb";
 export interface Connection {
     buffers: Observable<Uint8Array>;
-    output: (bufs: Observable<Uint8Array>) => void;
-    onUnsubscribe: Observable<void>;
+    sender: Subject<Uint8Array>;
 }
 export interface Peer {
     remoteInfo: ritp.IPeerInfo;
+    events: Observable<ritp.Event>;
+    eventsPullSender: Subject<number>;
     stream: (request: ritp.IRequest) => Stream;
     register: (path: string) => Observable<StreamRequest>;
 }
@@ -14,12 +15,12 @@ export interface Stream {
     pulls: Observable<number>;
     sendableAmounts: Observable<number>;
     isSendable: Observable<boolean>;
-    outputBufs: (bufs: Observable<Uint8Array>) => void;
+    bufSender: Subject<Uint8Array>;
 }
 export interface StreamRequest {
     request: ritp.IRequest;
     bufs: Observable<Uint8Array>;
-    outputPulls: (pulls: Observable<number>) => void;
+    pullSender: Subject<number>;
 }
 export declare const h5WsConnection: (url: string) => Observable<Connection>;
-export declare const init: (connection: Observable<Connection>, myInfo: ritp.IPeerInfo) => Observable<Peer>;
+export declare const init: (connections: Observable<Connection>, myInfo: ritp.IPeerInfo) => Observable<Peer>;
