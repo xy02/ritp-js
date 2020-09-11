@@ -1,21 +1,20 @@
-import { merge, Observable, BehaviorSubject, Subject, of, combineLatest, throwError, concat, from } from 'rxjs'
-import { map, scan, ignoreElements, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, groupBy, skip, filter, find, share, last, finalize, catchError, endWith, startWith, distinctUntilChanged, switchMap } from "rxjs/operators";
+import { merge, Observable, Subject, of, throwError, concat, from, Observer } from 'rxjs'
+import { map, scan, ignoreElements, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, filter, share, last, catchError, endWith, startWith, distinctUntilChanged, switchMap } from "rxjs/operators";
 import { ritp } from "./pb";
 
-export interface Connection {
+export interface Socket {
     buffers: Observable<Uint8Array>
     sender: Subject<Uint8Array>
-    // onUnsubscribe: Observable<void>
 }
 
-export interface Peer {
-    remoteInfo: ritp.IPeerInfo
-    events: Observable<ritp.Event>
-    eventsPullSender: Subject<number>
+export interface Connection {
+    remoteInfo: ritp.Info
+    msgs: Observable<ritp.Msg>
+    msgPuller: Subject<number>
     //创建stream
-    stream: (request: ritp.IRequest) => Stream
-    //注册stream处理路径
-    register: (path: string) => Observable<StreamRequest>
+    stream: (call: ritp.ICall) => Stream
+    //注册功能
+    register: (fn: string) => Observable<StreamCall>
 }
 
 export interface Stream {
@@ -26,30 +25,33 @@ export interface Stream {
     bufSender: Subject<Uint8Array>
 }
 
-export interface StreamRequest {
-    request: ritp.IRequest
+export interface StreamCall {
+    call: ritp.ICall
     bufs: Observable<Uint8Array>
     // outputPulls: (pulls: Observable<number>) => void
-    pullSender: Subject<number>
+    bufPuller: Subject<number>
 }
 
-export const h5WsConnection = (url: string) => new Observable<Connection>(s => {
+export const fromH5WebSocket = (url: string) => new Observable<Socket>(s => {
     const ws = new WebSocket(url, 'ritp')
     ws.binaryType = "arraybuffer"
     const sender = new Subject<Uint8Array>()
-    const sub = sender.subscribe(
-        buf => ws.send(buf),
-        err => {
-            if (ws.readyState == ws.OPEN) ws.close(4000, err.toString())
-        },
-        () => {
-            if (ws.readyState == ws.OPEN) ws.close()
+    const theEnd = new Observable(s2 => {
+        const closeCb = (ev: CloseEvent) => {
+            s2.error(ev.reason)
         }
+        ws.addEventListener('close', closeCb)
+        return () => {
+            ws.removeEventListener('close', closeCb)
+        }
+    })
+    sender.pipe(
+        takeUntil(theEnd),
+    ).subscribe(
+        buf => ws.send(buf),
+        err => ws.close(4000, err.toString()),
+        () => ws.close()
     )
-    ws.onclose = function (ev) {
-        sender.error(ev.reason)
-        s.error(ev.reason)
-    }
     const buffers = new Observable<Uint8Array>(s2 => {
         const cb = (ev: MessageEvent) => {
             const buf = new Uint8Array(ev.data)
@@ -59,11 +61,18 @@ export const h5WsConnection = (url: string) => new Observable<Connection>(s => {
         ws.addEventListener("message", cb)
         return () => {
             ws.removeEventListener("message", cb)
+            sender.complete()
         }
     }).pipe(
-        takeUntil(sender.pipe(last()))
+        takeUntil(theEnd),
+        takeUntil(sender.pipe(last())),
+        share(),
     )
+    ws.onclose = function (ev) {
+        s.error(ev.reason)
+    }
     ws.onopen = function (ev) {
+        ws.onclose = null
         s.next({
             buffers,
             sender,
@@ -71,7 +80,7 @@ export const h5WsConnection = (url: string) => new Observable<Connection>(s => {
         s.complete()
     }
     return () => {
-        sub.unsubscribe()
+        sender.complete()
     }
 })
 
@@ -97,218 +106,226 @@ class Queue<T> {
     }
 }
 
-//初始化Peer
-export const init = (connections: Observable<Connection>, myInfo: ritp.IPeerInfo): Observable<Peer> => connections.pipe(
-    tap(({ sender }) => {
-        sender.next(ritp.PeerInfo.encode(myInfo).finish())
-    }),
-    flatMap(({ buffers, sender }) => buffers.pipe(
-        take(1),
-        map(buf => ritp.PeerInfo.decode(buf)),
-        map(remoteInfo => {
-            const groupedFramesByType = buffers.pipe(
-                finalize(() => sender.next(ritp.Frame.encode({ disconnect: {} }).finish())),
-                map(buf => ritp.Frame.decode(buf)),
-                groupBy(frame => frame.type),
-                shareReplay(),
-            )
-            const remoteDisconnect = groupedFramesByType.pipe(
-                find(group => group.key == "disconnect"),
-                flatMap(group => group),
-                take(1),
-                flatMap(ev => throwError('disconnect')),
-            )
-            const pulls = groupedFramesByType.pipe(
-                find(group => group.key == "pull"),
-                flatMap(group => group),
-                map(frame => frame.pull),
-            )
-            const eventSender = new Subject<Observable<ritp.IEvent>>()
-            const outputEvents = eventSender.pipe(
-                flatMap(o => o),
-                share(),
-            )
-            const sendableAmounts = merge(outputEvents.pipe(map(_ => -1)), pulls).pipe(
-                takeUntil(remoteDisconnect),
-                scan((acc, num) => acc + num, 0),
-                shareReplay(1),
-            )
-            const isSendable = sendableAmounts.pipe(
-                map(amount => amount > 0),
-                distinctUntilChanged(),
-                shareReplay(1),
-            )
-            const queue = new Queue<ritp.IEvent>()
-            const sentEvent = isSendable.pipe(
-                switchMap(sendable =>
-                    sendable ?
-                        concat(
-                            sendableAmounts.pipe(
-                                take(1),
-                                flatMap(n => from(queue).pipe(
-                                    take(n),
-                                )),
-                            ),
-                            outputEvents
-                        ) :
-                        outputEvents.pipe(
-                            tap(ev => queue.push(ev)),
-                            ignoreElements(),
-                        )
-                ),
-                tap(event => sender.next(ritp.Frame.encode({ event }).finish())),
-            )
-            const events = groupedFramesByType.pipe(
-                find(group => group.key == "event"),
-                flatMap(group => group),
-                map(frame => frame.event as ritp.Event),
-                takeUntil(sentEvent.pipe(last())),
-                share(),
-            )
-            const eventsPullSender = new Subject<number>()
-            const sentEventsPulls = eventsPullSender.pipe(
-                tap(pull => sender.next(ritp.Frame.encode({ pull }).finish())),
-            )
-            const eventsOverflow = merge(events.pipe(map(_ => -1)), sentEventsPulls).pipe(
-                scan((acc, num) => acc + num, 0),
-                filter(acc => acc < 0),
-                tap(_ => {
-                    //输出错误
-                    sender.next()
-                    sender.complete()
-                }),
-                flatMap(_ => throwError({ reason: 'eventsOverflow' })),
-            )
-            const groupedEventsByType = events.pipe(
-                takeUntil(eventsOverflow), //约束连接级输入
-                groupBy(event => event.type),
-                shareReplay(),
-            )
-            const groupedCloseEventsByStreamId = groupedEventsByType.pipe(
-                find(group => group.key == "close"),
-                flatMap(group => group),
-                groupBy(event => event.streamId),
-                shareReplay(),
-            )
-            const groupedPullEventsByStreamId = groupedEventsByType.pipe(
-                find(group => group.key == "pull"),
-                flatMap(group => group),
-                groupBy(event => event.streamId),
-                shareReplay(),
-            )
-            // const streamIdSubject = new BehaviorSubject<number>(0)
-            // const newStreamId = streamIdSubject.pipe(
-            //     take(1),
-            //     tap(x => streamIdSubject.next(x + 1)),
-            // )
-            let sid = 0
-            const newStreamId = () => sid++
-            const stream = (request: ritp.IRequest): Stream => {
-                const streamId = newStreamId()
-                const remoteClose = groupedCloseEventsByStreamId.pipe(
-                    find(group => group.key == streamId),
-                    flatMap(group => group),
-                    take(1),
-                    flatMap(ev => throwError(ev.close)),
-                )
-                const pulls = groupedPullEventsByStreamId.pipe(
-                    find(group => group.key == streamId),
-                    flatMap(group => group),
-                    map(ev => ev.pull),
-                    share(),
-                )
-                // const sends = new BehaviorSubject<number>(0)
-                const bufSender = new Subject<Uint8Array>()
-                const sendableAmounts = merge(bufSender.pipe(map(_ => -1)), pulls).pipe(
-                    takeUntil(remoteClose),
-                    scan((acc, num) => acc + num, 0),
-                    shareReplay(1),
-                )
-                const isSendable = sendableAmounts.pipe(
-                    map(amount => amount > 0),
-                    distinctUntilChanged(),
-                    shareReplay(1),
-                )
-                eventSender.next(
-                    bufSender.pipe(
-                        takeUntil(remoteClose),
-                        withLatestFrom(isSendable),
-                        filter(([_, sendable]) => sendable),
-                        // tap(() => sends.next(-1)),
-                        map(([buf, _]) => ({ streamId, buf })),
-                        startWith({ streamId, request }),
-                        endWith({ streamId, end: { reason: ritp.End.Reason.COMPLETE } }),
-                        catchError(err => of({ streamId, end: { reason: ritp.End.Reason.CANCEL, message: err.message } })),
-                        // map(event => ritp.Frame.encode({ event }).finish()),
-                    )
-                )
-                return { pulls, sendableAmounts, bufSender, isSendable }
-            }
-            const groupedEndEventsByStreamId = groupedEventsByType.pipe(
-                find(group => group.key == "end"),
-                flatMap(group => group),
-                groupBy(event => event.streamId),
-                shareReplay(),
-            )
-            const groupedBufEventsByStreamId = groupedEventsByType.pipe(
-                find(group => group.key == "buf"),
-                flatMap(group => group),
-                groupBy(event => event.streamId),
-                shareReplay(),
-            )
-            const streamRequests = groupedEventsByType.pipe(
-                find(group => group.key == "request"),
-                flatMap(group => group),
-                map(event => {
-                    const streamId = event.streamId
-                    const request = event.request
-                    const theEnd = groupedEndEventsByStreamId.pipe(
-                        find(group => group.key == streamId),
-                        flatMap(group => group),
-                        take(1),
-                        flatMap(ev => ev.end.reason != ritp.End.Reason.COMPLETE ? throwError(ev.end) : of(ev.end)),
-                    )
-                    const bufs = groupedBufEventsByStreamId.pipe(
-                        find(group => group.key == streamId),
-                        flatMap(group => group),
-                        map(ev => ev.buf),
-                        takeUntil(theEnd),
-                        share(),
-                    )
-                    const pullSender = new Subject<number>()
-                    const bufsOverflow = merge(bufs.pipe(map(_ => -1)), pullSender).pipe(
-                        scan((acc, num) => acc + num, 0),
-                        filter(acc => acc < 0),
-                        tap(_ => {
-                            //输出错误
-                            sender.next()
-                            sender.complete()
-                        }),
-                        flatMap(_ => throwError({ reason: 'bufsOverflow' })),
-                    )
-                    eventSender.next(
-                        pullSender.pipe(
-                            map(pull => ({ streamId, pull })),
-                        )
-                    )
-                    const path = request.path
-                    return { path, request, bufs: bufs.pipe(takeUntil(bufsOverflow)), pullSender }
-                })
-            )
-            const groupedStreamRequestsByPath = streamRequests.pipe(
-                groupBy(sq => sq.path),
-            )
-            const register = (path: string): Observable<StreamRequest> => groupedStreamRequestsByPath.pipe(
-                find(group => group.key == path),
-                flatMap(group => group),
-            )
-            return {
-                remoteInfo,
-                events,
-                eventsPullSender,
-                stream,
-                register,
-            }
+//比groupBy+find更有效率
+const getSubValues = <T, K>(values: Observable<T>, keySelector: (value: T) => K) => (key: K): Observable<T> => {
+    const valueObserverMap = new Map<K, Observer<T>>()
+    const lastValue = values.pipe(
+        tap(v => {
+            const observer = valueObserverMap.get(keySelector(v))
+            if (observer) observer.next(v)
         }),
-    )),
+        last(),
+    )
+    return new Observable<T>(s => {
+        valueObserverMap.set(key, s)
+        return () => {
+            valueObserverMap.delete(key)
+        }
+    }).pipe(
+        takeUntil(lastValue),
+    )
+}
+
+const toGroupedInput = (buffers: Observable<Uint8Array>) => {
+    const frames = buffers.pipe(
+        map(buf => ritp.Frame.decode(buf)),
+        share(),
+    )
+    const getFramesByType = getSubValues(frames, v => v.type)
+    const remoteClose = getFramesByType('close').pipe(
+        take(1),
+        flatMap(frame => throwError(frame.close)),
+        shareReplay(),
+    )
+    const info = getFramesByType('info').pipe(
+        map(frame => frame.info as ritp.Info),
+        shareReplay(),
+    )
+    const errInfoMoreThanOnce = info.pipe(
+        scan((acc, v) => acc + 1, 0),
+        filter(n => n > 1),
+        take(1),
+        flatMap(_ => throwError({
+            reason: ritp.Close.Reason.PROTOCOL_ERROR,
+            message: 'cannot send Info more than once'
+        })),
+    )
+    const pullsToGetMsg = getFramesByType('pull').pipe(
+        map(frame => frame.pull),
+    )
+    const msgs = getFramesByType('msg').pipe(
+        map(frame => frame.msg as ritp.Msg),
+    )
+    return { msgs, pullsToGetMsg, info, remoteClose, errInfoMoreThanOnce }
+}
+
+const toOutputContext = (pullsToGetMsg: Observable<number>) => {
+    const msgSender = new Subject<ritp.IMsg>()
+    const sendableMsgsAmounts = merge(msgSender.pipe(map(_ => -1)), pullsToGetMsg).pipe(
+        scan((acc, num) => acc + num, 0),
+        shareReplay(1),
+    )
+    const isMsgSendable = sendableMsgsAmounts.pipe(
+        map(amount => amount > 0),
+        distinctUntilChanged(),
+        shareReplay(1),
+    )
+    const outputQueue = new Queue<ritp.IMsg>()
+    const msgFramesToSend = isMsgSendable.pipe(
+        switchMap(sendable =>
+            sendable ?
+                concat(
+                    sendableMsgsAmounts.pipe(
+                        take(1),
+                        flatMap(n => from(outputQueue).pipe(
+                            take(n),
+                        )),
+                    ),
+                    msgSender
+                ) :
+                msgSender.pipe(
+                    tap(msg => outputQueue.push(msg)),
+                    ignoreElements(),
+                )
+        ),
+        map(msg => ({ msg })),
+    )
+    const msgPuller = new Subject<number>()
+    const pullFramesToSend = msgPuller.pipe(
+        map(pull => ({ pull })),
+    )
+    let sid = 0
+    const newStreamId = () => sid++
+    return { msgSender, msgPuller, pullFramesToSend, msgFramesToSend, newStreamId }
+}
+
+const toInputContext = (msgs: Observable<ritp.Msg>, msgPuller: Subject<number>) => {
+    const errInputMsgsOverflow = merge(msgs.pipe(map(_ => -1)), msgPuller).pipe(
+        scan((acc, num) => acc + num, 0),
+        filter(acc => acc < 0),
+        take(1),
+        flatMap(_ => throwError({
+            reason: ritp.Close.Reason.PROTOCOL_ERROR,
+            message: 'input msg overflow'
+        })),
+    )
+    const getMsgsByType = getSubValues(msgs, msg => msg.type)
+    const closeMsgs = getMsgsByType('close')
+    const getCloseMsgsByStreamId = getSubValues(closeMsgs, msg => msg.streamId)
+    const pullMsgs = getMsgsByType('pull')
+    const getPullMsgsByStreamId = getSubValues(pullMsgs, msg => msg.streamId)
+    const endMsgs = getMsgsByType('end')
+    const getEndMsgsByStreamId = getSubValues(endMsgs, msg => msg.streamId)
+    const bufMsgs = getMsgsByType('buf')
+    const getBufMsgsByStreamId = getSubValues(bufMsgs, msg => msg.streamId)
+    const callMsgs = getMsgsByType('call')
+    const getCallMsgsByFn = getSubValues(callMsgs, msg => msg.call.fn)
+    return { errInputMsgsOverflow, getCallMsgsByFn, getCloseMsgsByStreamId, getPullMsgsByStreamId, getEndMsgsByStreamId, getBufMsgsByStreamId }
+}
+
+const registerWith = (
+    msgSender: Subject<ritp.IMsg>,
+    getCallMsgsByFn: (key: string) => Observable<ritp.Msg>,
+    getEndMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
+    getBufMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
+) => (fn: string): Observable<StreamCall> => getCallMsgsByFn(fn).pipe(
+    map(({ streamId, call }) => {
+        const theEnd = getEndMsgsByStreamId(streamId).pipe(
+            take(1),
+            flatMap(ev => ev.end.reason != ritp.End.Reason.COMPLETE ? throwError(ev.end) : of(ev.end)),
+        )
+        const inputBufs = getBufMsgsByStreamId(streamId).pipe(
+            map(ev => ev.buf),
+            takeUntil(theEnd),
+            share(),
+        )
+        const bufPuller = new Subject<number>()
+        const bufsOverflow = merge(inputBufs.pipe(map(_ => -1)), bufPuller).pipe(
+            scan((acc, num) => acc + num, 0),
+            filter(acc => acc < 0),
+            take(1),
+            flatMap(_ => throwError({
+                reason: ritp.Close.Reason.PROTOCOL_ERROR,
+                message: 'input buf overflow'
+            })),
+        )
+        const bufs = inputBufs.pipe(
+            takeUntil(bufsOverflow),
+        )
+        const pullMsgsToSend = bufPuller.pipe(
+            map(pull => ({ streamId, pull })),
+            endWith({ streamId, close: { reason: ritp.Close.Reason.APPLICATION_ERROR, message:"" } }),
+            catchError(err => of({ streamId, close: { reason: ritp.Close.Reason.APPLICATION_ERROR, message: err.message } })),
+        )
+        pullMsgsToSend.subscribe(msgSender) //side effect
+        return { call, bufs, bufPuller }
+    })
+)
+
+const streamWith = (
+    newStreamId: () => number,
+    msgSender: Subject<ritp.IMsg>,
+    getCloseMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
+    getPullMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
+) => (call: ritp.ICall): Stream => {
+    const streamId = newStreamId()
+    const remoteClose = getCloseMsgsByStreamId(streamId).pipe(
+        take(1),
+        flatMap(msg => throwError(msg.close)),
+    )
+    const pulls = getPullMsgsByStreamId(streamId).pipe(
+        map(msg => msg.pull),
+        takeUntil(remoteClose),
+        share(),
+    )
+    const bufSender = new Subject<Uint8Array>()
+    const bufs = bufSender.pipe(
+        takeUntil(remoteClose),
+    )
+    const sendableAmounts = merge(bufs.pipe(map(_ => -1)), pulls).pipe(
+        scan((acc, num) => acc + num, 0),
+        shareReplay(1),
+    )
+    const isSendable = sendableAmounts.pipe(
+        map(amount => amount > 0),
+        distinctUntilChanged(),
+        shareReplay(1),
+    )
+    const msgsToSend = bufs.pipe(
+        withLatestFrom(isSendable),
+        filter(([_, sendable]) => sendable),
+        map(([buf, _]) => ({ streamId, buf })),
+        startWith({ streamId, call }),
+        endWith({ streamId, end: { reason: ritp.End.Reason.COMPLETE } }),
+        catchError(err => of({ streamId, end: { reason: ritp.End.Reason.CANCEL, message: err.message } })),
+    )
+    msgsToSend.subscribe(msgSender) //side effect
+    return { pulls, sendableAmounts, bufSender, isSendable }
+}
+
+export const initWith = (myInfo: ritp.IInfo) => (sockets: Observable<Socket>) => sockets.pipe(
+    flatMap(({ buffers, sender }) => {
+        const { msgs, pullsToGetMsg, info, remoteClose, errInfoMoreThanOnce } = toGroupedInput(buffers)
+        const { msgSender, msgPuller, pullFramesToSend, msgFramesToSend, newStreamId } = toOutputContext(pullsToGetMsg)
+        const { errInputMsgsOverflow, getCloseMsgsByStreamId, getPullMsgsByStreamId,
+            getCallMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId } = toInputContext(msgs, msgPuller)
+        const errs = merge(
+            errInfoMoreThanOnce,
+            errInputMsgsOverflow,
+        )
+        merge(msgFramesToSend, pullFramesToSend).pipe(
+            startWith({ info: myInfo }),
+            takeUntil(errs),
+            catchError(close => of({ close })),
+            map(frame => ritp.Frame.encode(frame).finish()),
+            takeUntil(remoteClose),
+        ).subscribe(sender) //side effet
+        return info.pipe(
+            map(remoteInfo => {
+                const register = registerWith(msgSender, getCallMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId)
+                const stream = streamWith(newStreamId, msgSender, getCloseMsgsByStreamId, getPullMsgsByStreamId)
+                return { remoteInfo, msgs, msgPuller, register, stream }
+            }),
+        )
+    }),
 )

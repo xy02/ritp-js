@@ -2,119 +2,20 @@ import * as $protobuf from "protobufjs";
 /** Namespace ritp. */
 export namespace ritp {
 
-    /** Properties of a PeerInfo. */
-    interface IPeerInfo {
-
-        /** PeerInfo version */
-        version?: (string|null);
-
-        /** PeerInfo info */
-        info?: (Uint8Array|null);
-
-        /** PeerInfo infoType */
-        infoType?: (string|null);
-    }
-
-    /** Represents a PeerInfo. */
-    class PeerInfo implements IPeerInfo {
-
-        /**
-         * Constructs a new PeerInfo.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: ritp.IPeerInfo);
-
-        /** PeerInfo version. */
-        public version: string;
-
-        /** PeerInfo info. */
-        public info: Uint8Array;
-
-        /** PeerInfo infoType. */
-        public infoType: string;
-
-        /**
-         * Creates a new PeerInfo instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns PeerInfo instance
-         */
-        public static create(properties?: ritp.IPeerInfo): ritp.PeerInfo;
-
-        /**
-         * Encodes the specified PeerInfo message. Does not implicitly {@link ritp.PeerInfo.verify|verify} messages.
-         * @param message PeerInfo message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: ritp.IPeerInfo, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified PeerInfo message, length delimited. Does not implicitly {@link ritp.PeerInfo.verify|verify} messages.
-         * @param message PeerInfo message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: ritp.IPeerInfo, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a PeerInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns PeerInfo
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.PeerInfo;
-
-        /**
-         * Decodes a PeerInfo message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns PeerInfo
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.PeerInfo;
-
-        /**
-         * Verifies a PeerInfo message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a PeerInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns PeerInfo
-         */
-        public static fromObject(object: { [k: string]: any }): ritp.PeerInfo;
-
-        /**
-         * Creates a plain object from a PeerInfo message. Also converts values to other types if specified.
-         * @param message PeerInfo
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: ritp.PeerInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this PeerInfo to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
     /** Properties of a Frame. */
     interface IFrame {
 
-        /** Frame disconnect */
-        disconnect?: (ritp.IDisconnect|null);
+        /** Frame info */
+        info?: (ritp.IInfo|null);
+
+        /** Frame close */
+        close?: (ritp.IClose|null);
 
         /** Frame pull */
         pull?: (number|null);
 
-        /** Frame event */
-        event?: (ritp.IEvent|null);
+        /** Frame msg */
+        msg?: (ritp.IMsg|null);
     }
 
     /** Represents a Frame. */
@@ -126,17 +27,20 @@ export namespace ritp {
          */
         constructor(properties?: ritp.IFrame);
 
-        /** Frame disconnect. */
-        public disconnect?: (ritp.IDisconnect|null);
+        /** Frame info. */
+        public info?: (ritp.IInfo|null);
+
+        /** Frame close. */
+        public close?: (ritp.IClose|null);
 
         /** Frame pull. */
         public pull: number;
 
-        /** Frame event. */
-        public event?: (ritp.IEvent|null);
+        /** Frame msg. */
+        public msg?: (ritp.IMsg|null);
 
         /** Frame type. */
-        public type?: ("disconnect"|"pull"|"event");
+        public type?: ("info"|"close"|"pull"|"msg");
 
         /**
          * Creates a new Frame instance using the specified properties.
@@ -209,316 +113,103 @@ export namespace ritp {
         public toJSON(): { [k: string]: any };
     }
 
-    /** Properties of a Disconnect. */
-    interface IDisconnect {
+    /** Properties of an Info. */
+    interface IInfo {
+
+        /** Info version */
+        version?: (string|null);
+
+        /** Info data */
+        data?: (Uint8Array|null);
+
+        /** Info dataType */
+        dataType?: (string|null);
     }
 
-    /** Represents a Disconnect. */
-    class Disconnect implements IDisconnect {
+    /** Represents an Info. */
+    class Info implements IInfo {
 
         /**
-         * Constructs a new Disconnect.
+         * Constructs a new Info.
          * @param [properties] Properties to set
          */
-        constructor(properties?: ritp.IDisconnect);
+        constructor(properties?: ritp.IInfo);
+
+        /** Info version. */
+        public version: string;
+
+        /** Info data. */
+        public data: Uint8Array;
+
+        /** Info dataType. */
+        public dataType: string;
 
         /**
-         * Creates a new Disconnect instance using the specified properties.
+         * Creates a new Info instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns Disconnect instance
+         * @returns Info instance
          */
-        public static create(properties?: ritp.IDisconnect): ritp.Disconnect;
+        public static create(properties?: ritp.IInfo): ritp.Info;
 
         /**
-         * Encodes the specified Disconnect message. Does not implicitly {@link ritp.Disconnect.verify|verify} messages.
-         * @param message Disconnect message or plain object to encode
+         * Encodes the specified Info message. Does not implicitly {@link ritp.Info.verify|verify} messages.
+         * @param message Info message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: ritp.IDisconnect, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: ritp.IInfo, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Encodes the specified Disconnect message, length delimited. Does not implicitly {@link ritp.Disconnect.verify|verify} messages.
-         * @param message Disconnect message or plain object to encode
+         * Encodes the specified Info message, length delimited. Does not implicitly {@link ritp.Info.verify|verify} messages.
+         * @param message Info message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encodeDelimited(message: ritp.IDisconnect, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encodeDelimited(message: ritp.IInfo, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes a Disconnect message from the specified reader or buffer.
+         * Decodes an Info message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns Disconnect
+         * @returns Info
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.Disconnect;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.Info;
 
         /**
-         * Decodes a Disconnect message from the specified reader or buffer, length delimited.
+         * Decodes an Info message from the specified reader or buffer, length delimited.
          * @param reader Reader or buffer to decode from
-         * @returns Disconnect
+         * @returns Info
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.Disconnect;
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.Info;
 
         /**
-         * Verifies a Disconnect message.
+         * Verifies an Info message.
          * @param message Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
         public static verify(message: { [k: string]: any }): (string|null);
 
         /**
-         * Creates a Disconnect message from a plain object. Also converts values to their respective internal types.
+         * Creates an Info message from a plain object. Also converts values to their respective internal types.
          * @param object Plain object
-         * @returns Disconnect
+         * @returns Info
          */
-        public static fromObject(object: { [k: string]: any }): ritp.Disconnect;
+        public static fromObject(object: { [k: string]: any }): ritp.Info;
 
         /**
-         * Creates a plain object from a Disconnect message. Also converts values to other types if specified.
-         * @param message Disconnect
+         * Creates a plain object from an Info message. Also converts values to other types if specified.
+         * @param message Info
          * @param [options] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: ritp.Disconnect, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(message: ritp.Info, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
-         * Converts this Disconnect to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
-    /** Properties of an Event. */
-    interface IEvent {
-
-        /** Event streamId */
-        streamId?: (number|null);
-
-        /** Event request */
-        request?: (ritp.IRequest|null);
-
-        /** Event close */
-        close?: (ritp.IClose|null);
-
-        /** Event pull */
-        pull?: (number|null);
-
-        /** Event buf */
-        buf?: (Uint8Array|null);
-
-        /** Event end */
-        end?: (ritp.IEnd|null);
-    }
-
-    /** Represents an Event. */
-    class Event implements IEvent {
-
-        /**
-         * Constructs a new Event.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: ritp.IEvent);
-
-        /** Event streamId. */
-        public streamId: number;
-
-        /** Event request. */
-        public request?: (ritp.IRequest|null);
-
-        /** Event close. */
-        public close?: (ritp.IClose|null);
-
-        /** Event pull. */
-        public pull: number;
-
-        /** Event buf. */
-        public buf: Uint8Array;
-
-        /** Event end. */
-        public end?: (ritp.IEnd|null);
-
-        /** Event type. */
-        public type?: ("request"|"close"|"pull"|"buf"|"end");
-
-        /**
-         * Creates a new Event instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Event instance
-         */
-        public static create(properties?: ritp.IEvent): ritp.Event;
-
-        /**
-         * Encodes the specified Event message. Does not implicitly {@link ritp.Event.verify|verify} messages.
-         * @param message Event message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: ritp.IEvent, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified Event message, length delimited. Does not implicitly {@link ritp.Event.verify|verify} messages.
-         * @param message Event message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: ritp.IEvent, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes an Event message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Event
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.Event;
-
-        /**
-         * Decodes an Event message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns Event
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.Event;
-
-        /**
-         * Verifies an Event message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates an Event message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns Event
-         */
-        public static fromObject(object: { [k: string]: any }): ritp.Event;
-
-        /**
-         * Creates a plain object from an Event message. Also converts values to other types if specified.
-         * @param message Event
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: ritp.Event, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this Event to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
-    /** Properties of a Request. */
-    interface IRequest {
-
-        /** Request path */
-        path?: (string|null);
-
-        /** Request info */
-        info?: (Uint8Array|null);
-
-        /** Request infoType */
-        infoType?: (string|null);
-
-        /** Request bufType */
-        bufType?: (string|null);
-    }
-
-    /** Represents a Request. */
-    class Request implements IRequest {
-
-        /**
-         * Constructs a new Request.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: ritp.IRequest);
-
-        /** Request path. */
-        public path: string;
-
-        /** Request info. */
-        public info: Uint8Array;
-
-        /** Request infoType. */
-        public infoType: string;
-
-        /** Request bufType. */
-        public bufType: string;
-
-        /**
-         * Creates a new Request instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Request instance
-         */
-        public static create(properties?: ritp.IRequest): ritp.Request;
-
-        /**
-         * Encodes the specified Request message. Does not implicitly {@link ritp.Request.verify|verify} messages.
-         * @param message Request message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: ritp.IRequest, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified Request message, length delimited. Does not implicitly {@link ritp.Request.verify|verify} messages.
-         * @param message Request message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: ritp.IRequest, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Request message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Request
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.Request;
-
-        /**
-         * Decodes a Request message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns Request
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.Request;
-
-        /**
-         * Verifies a Request message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a Request message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns Request
-         */
-        public static fromObject(object: { [k: string]: any }): ritp.Request;
-
-        /**
-         * Creates a plain object from a Request message. Also converts values to other types if specified.
-         * @param message Request
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: ritp.Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this Request to JSON.
+         * Converts this Info to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
@@ -627,6 +318,237 @@ export namespace ritp {
             APPLICATION_ERROR = 0,
             PROTOCOL_ERROR = 1
         }
+    }
+
+    /** Properties of a Msg. */
+    interface IMsg {
+
+        /** Msg streamId */
+        streamId?: (number|null);
+
+        /** Msg call */
+        call?: (ritp.ICall|null);
+
+        /** Msg close */
+        close?: (ritp.IClose|null);
+
+        /** Msg pull */
+        pull?: (number|null);
+
+        /** Msg buf */
+        buf?: (Uint8Array|null);
+
+        /** Msg end */
+        end?: (ritp.IEnd|null);
+    }
+
+    /** Represents a Msg. */
+    class Msg implements IMsg {
+
+        /**
+         * Constructs a new Msg.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: ritp.IMsg);
+
+        /** Msg streamId. */
+        public streamId: number;
+
+        /** Msg call. */
+        public call?: (ritp.ICall|null);
+
+        /** Msg close. */
+        public close?: (ritp.IClose|null);
+
+        /** Msg pull. */
+        public pull: number;
+
+        /** Msg buf. */
+        public buf: Uint8Array;
+
+        /** Msg end. */
+        public end?: (ritp.IEnd|null);
+
+        /** Msg type. */
+        public type?: ("call"|"close"|"pull"|"buf"|"end");
+
+        /**
+         * Creates a new Msg instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Msg instance
+         */
+        public static create(properties?: ritp.IMsg): ritp.Msg;
+
+        /**
+         * Encodes the specified Msg message. Does not implicitly {@link ritp.Msg.verify|verify} messages.
+         * @param message Msg message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: ritp.IMsg, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified Msg message, length delimited. Does not implicitly {@link ritp.Msg.verify|verify} messages.
+         * @param message Msg message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: ritp.IMsg, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Msg message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Msg
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.Msg;
+
+        /**
+         * Decodes a Msg message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns Msg
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.Msg;
+
+        /**
+         * Verifies a Msg message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a Msg message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns Msg
+         */
+        public static fromObject(object: { [k: string]: any }): ritp.Msg;
+
+        /**
+         * Creates a plain object from a Msg message. Also converts values to other types if specified.
+         * @param message Msg
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: ritp.Msg, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this Msg to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a Call. */
+    interface ICall {
+
+        /** Call fn */
+        fn?: (string|null);
+
+        /** Call data */
+        data?: (Uint8Array|null);
+
+        /** Call dataType */
+        dataType?: (string|null);
+
+        /** Call bufType */
+        bufType?: (string|null);
+    }
+
+    /** Represents a Call. */
+    class Call implements ICall {
+
+        /**
+         * Constructs a new Call.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: ritp.ICall);
+
+        /** Call fn. */
+        public fn: string;
+
+        /** Call data. */
+        public data: Uint8Array;
+
+        /** Call dataType. */
+        public dataType: string;
+
+        /** Call bufType. */
+        public bufType: string;
+
+        /**
+         * Creates a new Call instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Call instance
+         */
+        public static create(properties?: ritp.ICall): ritp.Call;
+
+        /**
+         * Encodes the specified Call message. Does not implicitly {@link ritp.Call.verify|verify} messages.
+         * @param message Call message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: ritp.ICall, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified Call message, length delimited. Does not implicitly {@link ritp.Call.verify|verify} messages.
+         * @param message Call message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: ritp.ICall, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Call message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Call
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.Call;
+
+        /**
+         * Decodes a Call message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns Call
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.Call;
+
+        /**
+         * Verifies a Call message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a Call message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns Call
+         */
+        public static fromObject(object: { [k: string]: any }): ritp.Call;
+
+        /**
+         * Creates a plain object from a Call message. Also converts values to other types if specified.
+         * @param message Call
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: ritp.Call, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this Call to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
     }
 
     /** Properties of an End. */

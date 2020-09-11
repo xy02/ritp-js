@@ -1,73 +1,31 @@
-//v0.3.1
+//v0.4.0
 syntax = "proto3";
 
 package ritp;
 
-//本端信息，两端在连接建立后首先必须相互发送一次此信息，本端在验证对端信息失败时，发送Frame.disconnect后关闭连接
-message PeerInfo {
-    string version = 1;
-    bytes info = 2;
-    string info_type = 3;
-}
-
-//数据帧，连接上的基础数据载体，在本端验证对端PeerInfo后发送
+//数据帧，连接上的基础数据载体
 message Frame {
     oneof type {
+        //本端信息，两端在连接建立后首先必须相互发送且只发送一次此信息，本端在验证对端信息失败时，发送Frame.close后关闭连接
+        Info info = 1;
         //表明本端不再接收Frame消息,并关闭连接
-        Disconnect disconnect = 1;
-        //表示本端可以接收更多的event的个数，等同于ReactiveStream里request(n)的意义
-        //对端发送的event总个数必须小于等于本端发送的pull的累加总和
-        uint32 pull = 2;
-        //流事件
-        Event event = 3;
+        Close close = 2;
+        //表示本端可以接收更多的msg的个数，等同于ReactiveStream里request(n)的意义
+        //对端发送的msg总个数必须小于等于本端发送的pull的累加总和
+        uint32 pull = 3;
+        //流消息
+        Msg msg = 4;
     }
 }
 
-//表明本端不再接收Frame消息,并关闭连接
-message Disconnect {
-
+//本端信息
+message Info {
+    string version = 1;
+    bytes data = 2;
+    string data_type = 3;
 }
 
-/*
-    一条流有以下生命周期：
-    1. 发送端Peer发送一个request来创建一条流，并创建一个Requester来发送之后的流数据buf。
-    2. 接收端Peer收到并处理request后创建一个Handler来处理对端Requester发来的数据流。
-    3. Handler发送close信号表示结束流并不再接收任何流消息，Requester必须在收到close后不再发送任何流消息。
-    4. Handler发送pull信号表示拉取流数据buf的个数，pull可累加并且一旦发送不可撤回。
-    4. Requester必须在收到Handler发来的pull后才能发送buf，发送buf的总个数必须小于等于pull的累加总和。
-    5. Requester发送end表示不再发送任何流消息并结束流，Handler必须在收到end后不再发送任何控制信号。
-*/
-message Event {
-    //流ID
-    uint32 stream_id = 1;
-    oneof type {
-        //请求对端开始一条流，本端Requester生产数据，对端Handler消费数据
-        Request request = 2;
-        //Handler关闭流，不再接收流数据
-        Close close = 3;
-        //表示Handler可以接收更多的buf的个数，等同于ReactiveStream里request(n)的意义
-        //生产者Requester发送的buf总个数必须小于等于消费者Handler发送的pull的累加总和
-        uint32 pull = 4;
-        //Requester发送流数据，只有收到对端Handler发送的pull后，本端才能发送有限个数的buf
-        bytes buf = 5;
-        //Requester结束流
-        End end = 6;
-    }
-}
-
-//请求对端开始一条流
-message Request {
-    //请求路径，此路径应是一个可以在服务中心注册的服务方法
-    string path = 1;
-    //信息，可以包含生产者的信息、消费者需要的数据等
-    bytes info = 2;
-    //信息类型
-    string info_type = 3;
-    //Event.buf的类型
-    string buf_type = 4;
-}
-
-//表明本端Handler不再接收数据
+//关闭流
 message Close {
     Reason reason = 1;
     string message = 2;
@@ -76,6 +34,45 @@ message Close {
         APPLICATION_ERROR = 0;
         PROTOCOL_ERROR = 1;
     }
+}
+
+/*
+    一条流有以下生命周期：
+    1. 发送端发送一个call来创建一条流，并创建一个Producer来发送之后的流数据buf。
+    2. 接收端收到并处理call后创建一个Consumer来处理对端Producer发来的数据流。
+    3. Consumer发送close信号表示结束流并不再接收任何流消息，Producer必须在收到close后不再发送任何流消息。
+    4. Consumer发送pull信号表示拉取流数据buf的个数，pull可累加并且一旦发送不可撤回。
+    4. Producer必须在收到Consumer发来的pull后才能发送buf，发送buf的总个数必须小于等于pull的累加总和。
+    5. Producer发送end表示不再发送任何流消息并结束流，Consumer必须在收到end后不再发送任何控制信号。
+*/
+message Msg {
+    //流ID
+    uint32 stream_id = 1;
+    oneof type {
+        //请求对端开始一条流，本端Producer生产数据，对端Consumer消费数据
+        Call call = 2;
+        //Consumer关闭流，不再接收流数据
+        Close close = 3;
+        //表示Consumer可以接收更多的buf的个数，等同于ReactiveStream里request(n)的意义
+        //生产者Producer发送的buf总个数必须小于等于消费者Consumer发送的pull的累加总和
+        uint32 pull = 4;
+        //Producer发送流数据，只有收到对端Consumer发送的pull后，本端才能发送有限个数的buf
+        bytes buf = 5;
+        //Producer结束流
+        End end = 6;
+    }
+}
+
+//请求对端开始一条流
+message Call {
+    //功能名，此功能名应是一个可以在服务中心注册的服务方法
+    string fn = 1;
+    //数据，可以包含生产者的信息、消费者需要的数据等
+    bytes data = 2;
+    //数据类型
+    string data_type = 3;
+    //Msg.buf的类型
+    string buf_type = 4;
 }
 
 //结束流

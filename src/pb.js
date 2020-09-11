@@ -18,256 +18,16 @@ $root.ritp = (function() {
      */
     var ritp = {};
 
-    ritp.PeerInfo = (function() {
-
-        /**
-         * Properties of a PeerInfo.
-         * @memberof ritp
-         * @interface IPeerInfo
-         * @property {string|null} [version] PeerInfo version
-         * @property {Uint8Array|null} [info] PeerInfo info
-         * @property {string|null} [infoType] PeerInfo infoType
-         */
-
-        /**
-         * Constructs a new PeerInfo.
-         * @memberof ritp
-         * @classdesc Represents a PeerInfo.
-         * @implements IPeerInfo
-         * @constructor
-         * @param {ritp.IPeerInfo=} [properties] Properties to set
-         */
-        function PeerInfo(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * PeerInfo version.
-         * @member {string} version
-         * @memberof ritp.PeerInfo
-         * @instance
-         */
-        PeerInfo.prototype.version = "";
-
-        /**
-         * PeerInfo info.
-         * @member {Uint8Array} info
-         * @memberof ritp.PeerInfo
-         * @instance
-         */
-        PeerInfo.prototype.info = $util.newBuffer([]);
-
-        /**
-         * PeerInfo infoType.
-         * @member {string} infoType
-         * @memberof ritp.PeerInfo
-         * @instance
-         */
-        PeerInfo.prototype.infoType = "";
-
-        /**
-         * Creates a new PeerInfo instance using the specified properties.
-         * @function create
-         * @memberof ritp.PeerInfo
-         * @static
-         * @param {ritp.IPeerInfo=} [properties] Properties to set
-         * @returns {ritp.PeerInfo} PeerInfo instance
-         */
-        PeerInfo.create = function create(properties) {
-            return new PeerInfo(properties);
-        };
-
-        /**
-         * Encodes the specified PeerInfo message. Does not implicitly {@link ritp.PeerInfo.verify|verify} messages.
-         * @function encode
-         * @memberof ritp.PeerInfo
-         * @static
-         * @param {ritp.IPeerInfo} message PeerInfo message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        PeerInfo.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.version != null && Object.hasOwnProperty.call(message, "version"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.version);
-            if (message.info != null && Object.hasOwnProperty.call(message, "info"))
-                writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.info);
-            if (message.infoType != null && Object.hasOwnProperty.call(message, "infoType"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.infoType);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified PeerInfo message, length delimited. Does not implicitly {@link ritp.PeerInfo.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof ritp.PeerInfo
-         * @static
-         * @param {ritp.IPeerInfo} message PeerInfo message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        PeerInfo.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a PeerInfo message from the specified reader or buffer.
-         * @function decode
-         * @memberof ritp.PeerInfo
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {ritp.PeerInfo} PeerInfo
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        PeerInfo.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.PeerInfo();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.version = reader.string();
-                    break;
-                case 2:
-                    message.info = reader.bytes();
-                    break;
-                case 3:
-                    message.infoType = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a PeerInfo message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof ritp.PeerInfo
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {ritp.PeerInfo} PeerInfo
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        PeerInfo.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a PeerInfo message.
-         * @function verify
-         * @memberof ritp.PeerInfo
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        PeerInfo.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.version != null && message.hasOwnProperty("version"))
-                if (!$util.isString(message.version))
-                    return "version: string expected";
-            if (message.info != null && message.hasOwnProperty("info"))
-                if (!(message.info && typeof message.info.length === "number" || $util.isString(message.info)))
-                    return "info: buffer expected";
-            if (message.infoType != null && message.hasOwnProperty("infoType"))
-                if (!$util.isString(message.infoType))
-                    return "infoType: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a PeerInfo message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof ritp.PeerInfo
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {ritp.PeerInfo} PeerInfo
-         */
-        PeerInfo.fromObject = function fromObject(object) {
-            if (object instanceof $root.ritp.PeerInfo)
-                return object;
-            var message = new $root.ritp.PeerInfo();
-            if (object.version != null)
-                message.version = String(object.version);
-            if (object.info != null)
-                if (typeof object.info === "string")
-                    $util.base64.decode(object.info, message.info = $util.newBuffer($util.base64.length(object.info)), 0);
-                else if (object.info.length)
-                    message.info = object.info;
-            if (object.infoType != null)
-                message.infoType = String(object.infoType);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a PeerInfo message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof ritp.PeerInfo
-         * @static
-         * @param {ritp.PeerInfo} message PeerInfo
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        PeerInfo.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults) {
-                object.version = "";
-                if (options.bytes === String)
-                    object.info = "";
-                else {
-                    object.info = [];
-                    if (options.bytes !== Array)
-                        object.info = $util.newBuffer(object.info);
-                }
-                object.infoType = "";
-            }
-            if (message.version != null && message.hasOwnProperty("version"))
-                object.version = message.version;
-            if (message.info != null && message.hasOwnProperty("info"))
-                object.info = options.bytes === String ? $util.base64.encode(message.info, 0, message.info.length) : options.bytes === Array ? Array.prototype.slice.call(message.info) : message.info;
-            if (message.infoType != null && message.hasOwnProperty("infoType"))
-                object.infoType = message.infoType;
-            return object;
-        };
-
-        /**
-         * Converts this PeerInfo to JSON.
-         * @function toJSON
-         * @memberof ritp.PeerInfo
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        PeerInfo.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return PeerInfo;
-    })();
-
     ritp.Frame = (function() {
 
         /**
          * Properties of a Frame.
          * @memberof ritp
          * @interface IFrame
-         * @property {ritp.IDisconnect|null} [disconnect] Frame disconnect
+         * @property {ritp.IInfo|null} [info] Frame info
+         * @property {ritp.IClose|null} [close] Frame close
          * @property {number|null} [pull] Frame pull
-         * @property {ritp.IEvent|null} [event] Frame event
+         * @property {ritp.IMsg|null} [msg] Frame msg
          */
 
         /**
@@ -286,12 +46,20 @@ $root.ritp = (function() {
         }
 
         /**
-         * Frame disconnect.
-         * @member {ritp.IDisconnect|null|undefined} disconnect
+         * Frame info.
+         * @member {ritp.IInfo|null|undefined} info
          * @memberof ritp.Frame
          * @instance
          */
-        Frame.prototype.disconnect = null;
+        Frame.prototype.info = null;
+
+        /**
+         * Frame close.
+         * @member {ritp.IClose|null|undefined} close
+         * @memberof ritp.Frame
+         * @instance
+         */
+        Frame.prototype.close = null;
 
         /**
          * Frame pull.
@@ -302,24 +70,24 @@ $root.ritp = (function() {
         Frame.prototype.pull = 0;
 
         /**
-         * Frame event.
-         * @member {ritp.IEvent|null|undefined} event
+         * Frame msg.
+         * @member {ritp.IMsg|null|undefined} msg
          * @memberof ritp.Frame
          * @instance
          */
-        Frame.prototype.event = null;
+        Frame.prototype.msg = null;
 
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields;
 
         /**
          * Frame type.
-         * @member {"disconnect"|"pull"|"event"|undefined} type
+         * @member {"info"|"close"|"pull"|"msg"|undefined} type
          * @memberof ritp.Frame
          * @instance
          */
         Object.defineProperty(Frame.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["disconnect", "pull", "event"]),
+            get: $util.oneOfGetter($oneOfFields = ["info", "close", "pull", "msg"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -347,12 +115,14 @@ $root.ritp = (function() {
         Frame.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.disconnect != null && Object.hasOwnProperty.call(message, "disconnect"))
-                $root.ritp.Disconnect.encode(message.disconnect, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.info != null && Object.hasOwnProperty.call(message, "info"))
+                $root.ritp.Info.encode(message.info, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.close != null && Object.hasOwnProperty.call(message, "close"))
+                $root.ritp.Close.encode(message.close, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
             if (message.pull != null && Object.hasOwnProperty.call(message, "pull"))
-                writer.uint32(/* id 2, wireType 0 =*/16).uint32(message.pull);
-            if (message.event != null && Object.hasOwnProperty.call(message, "event"))
-                $root.ritp.Event.encode(message.event, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                writer.uint32(/* id 3, wireType 0 =*/24).uint32(message.pull);
+            if (message.msg != null && Object.hasOwnProperty.call(message, "msg"))
+                $root.ritp.Msg.encode(message.msg, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
             return writer;
         };
 
@@ -388,13 +158,16 @@ $root.ritp = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.disconnect = $root.ritp.Disconnect.decode(reader, reader.uint32());
+                    message.info = $root.ritp.Info.decode(reader, reader.uint32());
                     break;
                 case 2:
-                    message.pull = reader.uint32();
+                    message.close = $root.ritp.Close.decode(reader, reader.uint32());
                     break;
                 case 3:
-                    message.event = $root.ritp.Event.decode(reader, reader.uint32());
+                    message.pull = reader.uint32();
+                    break;
+                case 4:
+                    message.msg = $root.ritp.Msg.decode(reader, reader.uint32());
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -432,490 +205,12 @@ $root.ritp = (function() {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             var properties = {};
-            if (message.disconnect != null && message.hasOwnProperty("disconnect")) {
+            if (message.info != null && message.hasOwnProperty("info")) {
                 properties.type = 1;
                 {
-                    var error = $root.ritp.Disconnect.verify(message.disconnect);
+                    var error = $root.ritp.Info.verify(message.info);
                     if (error)
-                        return "disconnect." + error;
-                }
-            }
-            if (message.pull != null && message.hasOwnProperty("pull")) {
-                if (properties.type === 1)
-                    return "type: multiple values";
-                properties.type = 1;
-                if (!$util.isInteger(message.pull))
-                    return "pull: integer expected";
-            }
-            if (message.event != null && message.hasOwnProperty("event")) {
-                if (properties.type === 1)
-                    return "type: multiple values";
-                properties.type = 1;
-                {
-                    var error = $root.ritp.Event.verify(message.event);
-                    if (error)
-                        return "event." + error;
-                }
-            }
-            return null;
-        };
-
-        /**
-         * Creates a Frame message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof ritp.Frame
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {ritp.Frame} Frame
-         */
-        Frame.fromObject = function fromObject(object) {
-            if (object instanceof $root.ritp.Frame)
-                return object;
-            var message = new $root.ritp.Frame();
-            if (object.disconnect != null) {
-                if (typeof object.disconnect !== "object")
-                    throw TypeError(".ritp.Frame.disconnect: object expected");
-                message.disconnect = $root.ritp.Disconnect.fromObject(object.disconnect);
-            }
-            if (object.pull != null)
-                message.pull = object.pull >>> 0;
-            if (object.event != null) {
-                if (typeof object.event !== "object")
-                    throw TypeError(".ritp.Frame.event: object expected");
-                message.event = $root.ritp.Event.fromObject(object.event);
-            }
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a Frame message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof ritp.Frame
-         * @static
-         * @param {ritp.Frame} message Frame
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        Frame.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (message.disconnect != null && message.hasOwnProperty("disconnect")) {
-                object.disconnect = $root.ritp.Disconnect.toObject(message.disconnect, options);
-                if (options.oneofs)
-                    object.type = "disconnect";
-            }
-            if (message.pull != null && message.hasOwnProperty("pull")) {
-                object.pull = message.pull;
-                if (options.oneofs)
-                    object.type = "pull";
-            }
-            if (message.event != null && message.hasOwnProperty("event")) {
-                object.event = $root.ritp.Event.toObject(message.event, options);
-                if (options.oneofs)
-                    object.type = "event";
-            }
-            return object;
-        };
-
-        /**
-         * Converts this Frame to JSON.
-         * @function toJSON
-         * @memberof ritp.Frame
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        Frame.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return Frame;
-    })();
-
-    ritp.Disconnect = (function() {
-
-        /**
-         * Properties of a Disconnect.
-         * @memberof ritp
-         * @interface IDisconnect
-         */
-
-        /**
-         * Constructs a new Disconnect.
-         * @memberof ritp
-         * @classdesc Represents a Disconnect.
-         * @implements IDisconnect
-         * @constructor
-         * @param {ritp.IDisconnect=} [properties] Properties to set
-         */
-        function Disconnect(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * Creates a new Disconnect instance using the specified properties.
-         * @function create
-         * @memberof ritp.Disconnect
-         * @static
-         * @param {ritp.IDisconnect=} [properties] Properties to set
-         * @returns {ritp.Disconnect} Disconnect instance
-         */
-        Disconnect.create = function create(properties) {
-            return new Disconnect(properties);
-        };
-
-        /**
-         * Encodes the specified Disconnect message. Does not implicitly {@link ritp.Disconnect.verify|verify} messages.
-         * @function encode
-         * @memberof ritp.Disconnect
-         * @static
-         * @param {ritp.IDisconnect} message Disconnect message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Disconnect.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            return writer;
-        };
-
-        /**
-         * Encodes the specified Disconnect message, length delimited. Does not implicitly {@link ritp.Disconnect.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof ritp.Disconnect
-         * @static
-         * @param {ritp.IDisconnect} message Disconnect message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Disconnect.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a Disconnect message from the specified reader or buffer.
-         * @function decode
-         * @memberof ritp.Disconnect
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {ritp.Disconnect} Disconnect
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Disconnect.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Disconnect();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a Disconnect message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof ritp.Disconnect
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {ritp.Disconnect} Disconnect
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Disconnect.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a Disconnect message.
-         * @function verify
-         * @memberof ritp.Disconnect
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        Disconnect.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            return null;
-        };
-
-        /**
-         * Creates a Disconnect message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof ritp.Disconnect
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {ritp.Disconnect} Disconnect
-         */
-        Disconnect.fromObject = function fromObject(object) {
-            if (object instanceof $root.ritp.Disconnect)
-                return object;
-            return new $root.ritp.Disconnect();
-        };
-
-        /**
-         * Creates a plain object from a Disconnect message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof ritp.Disconnect
-         * @static
-         * @param {ritp.Disconnect} message Disconnect
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        Disconnect.toObject = function toObject() {
-            return {};
-        };
-
-        /**
-         * Converts this Disconnect to JSON.
-         * @function toJSON
-         * @memberof ritp.Disconnect
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        Disconnect.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return Disconnect;
-    })();
-
-    ritp.Event = (function() {
-
-        /**
-         * Properties of an Event.
-         * @memberof ritp
-         * @interface IEvent
-         * @property {number|null} [streamId] Event streamId
-         * @property {ritp.IRequest|null} [request] Event request
-         * @property {ritp.IClose|null} [close] Event close
-         * @property {number|null} [pull] Event pull
-         * @property {Uint8Array|null} [buf] Event buf
-         * @property {ritp.IEnd|null} [end] Event end
-         */
-
-        /**
-         * Constructs a new Event.
-         * @memberof ritp
-         * @classdesc Represents an Event.
-         * @implements IEvent
-         * @constructor
-         * @param {ritp.IEvent=} [properties] Properties to set
-         */
-        function Event(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * Event streamId.
-         * @member {number} streamId
-         * @memberof ritp.Event
-         * @instance
-         */
-        Event.prototype.streamId = 0;
-
-        /**
-         * Event request.
-         * @member {ritp.IRequest|null|undefined} request
-         * @memberof ritp.Event
-         * @instance
-         */
-        Event.prototype.request = null;
-
-        /**
-         * Event close.
-         * @member {ritp.IClose|null|undefined} close
-         * @memberof ritp.Event
-         * @instance
-         */
-        Event.prototype.close = null;
-
-        /**
-         * Event pull.
-         * @member {number} pull
-         * @memberof ritp.Event
-         * @instance
-         */
-        Event.prototype.pull = 0;
-
-        /**
-         * Event buf.
-         * @member {Uint8Array} buf
-         * @memberof ritp.Event
-         * @instance
-         */
-        Event.prototype.buf = $util.newBuffer([]);
-
-        /**
-         * Event end.
-         * @member {ritp.IEnd|null|undefined} end
-         * @memberof ritp.Event
-         * @instance
-         */
-        Event.prototype.end = null;
-
-        // OneOf field names bound to virtual getters and setters
-        var $oneOfFields;
-
-        /**
-         * Event type.
-         * @member {"request"|"close"|"pull"|"buf"|"end"|undefined} type
-         * @memberof ritp.Event
-         * @instance
-         */
-        Object.defineProperty(Event.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["request", "close", "pull", "buf", "end"]),
-            set: $util.oneOfSetter($oneOfFields)
-        });
-
-        /**
-         * Creates a new Event instance using the specified properties.
-         * @function create
-         * @memberof ritp.Event
-         * @static
-         * @param {ritp.IEvent=} [properties] Properties to set
-         * @returns {ritp.Event} Event instance
-         */
-        Event.create = function create(properties) {
-            return new Event(properties);
-        };
-
-        /**
-         * Encodes the specified Event message. Does not implicitly {@link ritp.Event.verify|verify} messages.
-         * @function encode
-         * @memberof ritp.Event
-         * @static
-         * @param {ritp.IEvent} message Event message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Event.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.streamId != null && Object.hasOwnProperty.call(message, "streamId"))
-                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.streamId);
-            if (message.request != null && Object.hasOwnProperty.call(message, "request"))
-                $root.ritp.Request.encode(message.request, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
-            if (message.close != null && Object.hasOwnProperty.call(message, "close"))
-                $root.ritp.Close.encode(message.close, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-            if (message.pull != null && Object.hasOwnProperty.call(message, "pull"))
-                writer.uint32(/* id 4, wireType 0 =*/32).uint32(message.pull);
-            if (message.buf != null && Object.hasOwnProperty.call(message, "buf"))
-                writer.uint32(/* id 5, wireType 2 =*/42).bytes(message.buf);
-            if (message.end != null && Object.hasOwnProperty.call(message, "end"))
-                $root.ritp.End.encode(message.end, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
-            return writer;
-        };
-
-        /**
-         * Encodes the specified Event message, length delimited. Does not implicitly {@link ritp.Event.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof ritp.Event
-         * @static
-         * @param {ritp.IEvent} message Event message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Event.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes an Event message from the specified reader or buffer.
-         * @function decode
-         * @memberof ritp.Event
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {ritp.Event} Event
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Event.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Event();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.streamId = reader.uint32();
-                    break;
-                case 2:
-                    message.request = $root.ritp.Request.decode(reader, reader.uint32());
-                    break;
-                case 3:
-                    message.close = $root.ritp.Close.decode(reader, reader.uint32());
-                    break;
-                case 4:
-                    message.pull = reader.uint32();
-                    break;
-                case 5:
-                    message.buf = reader.bytes();
-                    break;
-                case 6:
-                    message.end = $root.ritp.End.decode(reader, reader.uint32());
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes an Event message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof ritp.Event
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {ritp.Event} Event
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Event.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies an Event message.
-         * @function verify
-         * @memberof ritp.Event
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        Event.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            var properties = {};
-            if (message.streamId != null && message.hasOwnProperty("streamId"))
-                if (!$util.isInteger(message.streamId))
-                    return "streamId: integer expected";
-            if (message.request != null && message.hasOwnProperty("request")) {
-                properties.type = 1;
-                {
-                    var error = $root.ritp.Request.verify(message.request);
-                    if (error)
-                        return "request." + error;
+                        return "info." + error;
                 }
             }
             if (message.close != null && message.hasOwnProperty("close")) {
@@ -935,86 +230,68 @@ $root.ritp = (function() {
                 if (!$util.isInteger(message.pull))
                     return "pull: integer expected";
             }
-            if (message.buf != null && message.hasOwnProperty("buf")) {
-                if (properties.type === 1)
-                    return "type: multiple values";
-                properties.type = 1;
-                if (!(message.buf && typeof message.buf.length === "number" || $util.isString(message.buf)))
-                    return "buf: buffer expected";
-            }
-            if (message.end != null && message.hasOwnProperty("end")) {
+            if (message.msg != null && message.hasOwnProperty("msg")) {
                 if (properties.type === 1)
                     return "type: multiple values";
                 properties.type = 1;
                 {
-                    var error = $root.ritp.End.verify(message.end);
+                    var error = $root.ritp.Msg.verify(message.msg);
                     if (error)
-                        return "end." + error;
+                        return "msg." + error;
                 }
             }
             return null;
         };
 
         /**
-         * Creates an Event message from a plain object. Also converts values to their respective internal types.
+         * Creates a Frame message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof ritp.Event
+         * @memberof ritp.Frame
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {ritp.Event} Event
+         * @returns {ritp.Frame} Frame
          */
-        Event.fromObject = function fromObject(object) {
-            if (object instanceof $root.ritp.Event)
+        Frame.fromObject = function fromObject(object) {
+            if (object instanceof $root.ritp.Frame)
                 return object;
-            var message = new $root.ritp.Event();
-            if (object.streamId != null)
-                message.streamId = object.streamId >>> 0;
-            if (object.request != null) {
-                if (typeof object.request !== "object")
-                    throw TypeError(".ritp.Event.request: object expected");
-                message.request = $root.ritp.Request.fromObject(object.request);
+            var message = new $root.ritp.Frame();
+            if (object.info != null) {
+                if (typeof object.info !== "object")
+                    throw TypeError(".ritp.Frame.info: object expected");
+                message.info = $root.ritp.Info.fromObject(object.info);
             }
             if (object.close != null) {
                 if (typeof object.close !== "object")
-                    throw TypeError(".ritp.Event.close: object expected");
+                    throw TypeError(".ritp.Frame.close: object expected");
                 message.close = $root.ritp.Close.fromObject(object.close);
             }
             if (object.pull != null)
                 message.pull = object.pull >>> 0;
-            if (object.buf != null)
-                if (typeof object.buf === "string")
-                    $util.base64.decode(object.buf, message.buf = $util.newBuffer($util.base64.length(object.buf)), 0);
-                else if (object.buf.length)
-                    message.buf = object.buf;
-            if (object.end != null) {
-                if (typeof object.end !== "object")
-                    throw TypeError(".ritp.Event.end: object expected");
-                message.end = $root.ritp.End.fromObject(object.end);
+            if (object.msg != null) {
+                if (typeof object.msg !== "object")
+                    throw TypeError(".ritp.Frame.msg: object expected");
+                message.msg = $root.ritp.Msg.fromObject(object.msg);
             }
             return message;
         };
 
         /**
-         * Creates a plain object from an Event message. Also converts values to other types if specified.
+         * Creates a plain object from a Frame message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof ritp.Event
+         * @memberof ritp.Frame
          * @static
-         * @param {ritp.Event} message Event
+         * @param {ritp.Frame} message Frame
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        Event.toObject = function toObject(message, options) {
+        Frame.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
-            if (options.defaults)
-                object.streamId = 0;
-            if (message.streamId != null && message.hasOwnProperty("streamId"))
-                object.streamId = message.streamId;
-            if (message.request != null && message.hasOwnProperty("request")) {
-                object.request = $root.ritp.Request.toObject(message.request, options);
+            if (message.info != null && message.hasOwnProperty("info")) {
+                object.info = $root.ritp.Info.toObject(message.info, options);
                 if (options.oneofs)
-                    object.type = "request";
+                    object.type = "info";
             }
             if (message.close != null && message.hasOwnProperty("close")) {
                 object.close = $root.ritp.Close.toObject(message.close, options);
@@ -1026,54 +303,48 @@ $root.ritp = (function() {
                 if (options.oneofs)
                     object.type = "pull";
             }
-            if (message.buf != null && message.hasOwnProperty("buf")) {
-                object.buf = options.bytes === String ? $util.base64.encode(message.buf, 0, message.buf.length) : options.bytes === Array ? Array.prototype.slice.call(message.buf) : message.buf;
+            if (message.msg != null && message.hasOwnProperty("msg")) {
+                object.msg = $root.ritp.Msg.toObject(message.msg, options);
                 if (options.oneofs)
-                    object.type = "buf";
-            }
-            if (message.end != null && message.hasOwnProperty("end")) {
-                object.end = $root.ritp.End.toObject(message.end, options);
-                if (options.oneofs)
-                    object.type = "end";
+                    object.type = "msg";
             }
             return object;
         };
 
         /**
-         * Converts this Event to JSON.
+         * Converts this Frame to JSON.
          * @function toJSON
-         * @memberof ritp.Event
+         * @memberof ritp.Frame
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        Event.prototype.toJSON = function toJSON() {
+        Frame.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return Event;
+        return Frame;
     })();
 
-    ritp.Request = (function() {
+    ritp.Info = (function() {
 
         /**
-         * Properties of a Request.
+         * Properties of an Info.
          * @memberof ritp
-         * @interface IRequest
-         * @property {string|null} [path] Request path
-         * @property {Uint8Array|null} [info] Request info
-         * @property {string|null} [infoType] Request infoType
-         * @property {string|null} [bufType] Request bufType
+         * @interface IInfo
+         * @property {string|null} [version] Info version
+         * @property {Uint8Array|null} [data] Info data
+         * @property {string|null} [dataType] Info dataType
          */
 
         /**
-         * Constructs a new Request.
+         * Constructs a new Info.
          * @memberof ritp
-         * @classdesc Represents a Request.
-         * @implements IRequest
+         * @classdesc Represents an Info.
+         * @implements IInfo
          * @constructor
-         * @param {ritp.IRequest=} [properties] Properties to set
+         * @param {ritp.IInfo=} [properties] Properties to set
          */
-        function Request(properties) {
+        function Info(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -1081,114 +352,101 @@ $root.ritp = (function() {
         }
 
         /**
-         * Request path.
-         * @member {string} path
-         * @memberof ritp.Request
+         * Info version.
+         * @member {string} version
+         * @memberof ritp.Info
          * @instance
          */
-        Request.prototype.path = "";
+        Info.prototype.version = "";
 
         /**
-         * Request info.
-         * @member {Uint8Array} info
-         * @memberof ritp.Request
+         * Info data.
+         * @member {Uint8Array} data
+         * @memberof ritp.Info
          * @instance
          */
-        Request.prototype.info = $util.newBuffer([]);
+        Info.prototype.data = $util.newBuffer([]);
 
         /**
-         * Request infoType.
-         * @member {string} infoType
-         * @memberof ritp.Request
+         * Info dataType.
+         * @member {string} dataType
+         * @memberof ritp.Info
          * @instance
          */
-        Request.prototype.infoType = "";
+        Info.prototype.dataType = "";
 
         /**
-         * Request bufType.
-         * @member {string} bufType
-         * @memberof ritp.Request
-         * @instance
-         */
-        Request.prototype.bufType = "";
-
-        /**
-         * Creates a new Request instance using the specified properties.
+         * Creates a new Info instance using the specified properties.
          * @function create
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @static
-         * @param {ritp.IRequest=} [properties] Properties to set
-         * @returns {ritp.Request} Request instance
+         * @param {ritp.IInfo=} [properties] Properties to set
+         * @returns {ritp.Info} Info instance
          */
-        Request.create = function create(properties) {
-            return new Request(properties);
+        Info.create = function create(properties) {
+            return new Info(properties);
         };
 
         /**
-         * Encodes the specified Request message. Does not implicitly {@link ritp.Request.verify|verify} messages.
+         * Encodes the specified Info message. Does not implicitly {@link ritp.Info.verify|verify} messages.
          * @function encode
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @static
-         * @param {ritp.IRequest} message Request message or plain object to encode
+         * @param {ritp.IInfo} message Info message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        Request.encode = function encode(message, writer) {
+        Info.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.path != null && Object.hasOwnProperty.call(message, "path"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.path);
-            if (message.info != null && Object.hasOwnProperty.call(message, "info"))
-                writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.info);
-            if (message.infoType != null && Object.hasOwnProperty.call(message, "infoType"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.infoType);
-            if (message.bufType != null && Object.hasOwnProperty.call(message, "bufType"))
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.bufType);
+            if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.version);
+            if (message.data != null && Object.hasOwnProperty.call(message, "data"))
+                writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.data);
+            if (message.dataType != null && Object.hasOwnProperty.call(message, "dataType"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.dataType);
             return writer;
         };
 
         /**
-         * Encodes the specified Request message, length delimited. Does not implicitly {@link ritp.Request.verify|verify} messages.
+         * Encodes the specified Info message, length delimited. Does not implicitly {@link ritp.Info.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @static
-         * @param {ritp.IRequest} message Request message or plain object to encode
+         * @param {ritp.IInfo} message Info message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        Request.encodeDelimited = function encodeDelimited(message, writer) {
+        Info.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a Request message from the specified reader or buffer.
+         * Decodes an Info message from the specified reader or buffer.
          * @function decode
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {ritp.Request} Request
+         * @returns {ritp.Info} Info
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        Request.decode = function decode(reader, length) {
+        Info.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Request();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Info();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.path = reader.string();
+                    message.version = reader.string();
                     break;
                 case 2:
-                    message.info = reader.bytes();
+                    message.data = reader.bytes();
                     break;
                 case 3:
-                    message.infoType = reader.string();
-                    break;
-                case 4:
-                    message.bufType = reader.string();
+                    message.dataType = reader.string();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1199,121 +457,113 @@ $root.ritp = (function() {
         };
 
         /**
-         * Decodes a Request message from the specified reader or buffer, length delimited.
+         * Decodes an Info message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {ritp.Request} Request
+         * @returns {ritp.Info} Info
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        Request.decodeDelimited = function decodeDelimited(reader) {
+        Info.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a Request message.
+         * Verifies an Info message.
          * @function verify
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        Request.verify = function verify(message) {
+        Info.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.path != null && message.hasOwnProperty("path"))
-                if (!$util.isString(message.path))
-                    return "path: string expected";
-            if (message.info != null && message.hasOwnProperty("info"))
-                if (!(message.info && typeof message.info.length === "number" || $util.isString(message.info)))
-                    return "info: buffer expected";
-            if (message.infoType != null && message.hasOwnProperty("infoType"))
-                if (!$util.isString(message.infoType))
-                    return "infoType: string expected";
-            if (message.bufType != null && message.hasOwnProperty("bufType"))
-                if (!$util.isString(message.bufType))
-                    return "bufType: string expected";
+            if (message.version != null && message.hasOwnProperty("version"))
+                if (!$util.isString(message.version))
+                    return "version: string expected";
+            if (message.data != null && message.hasOwnProperty("data"))
+                if (!(message.data && typeof message.data.length === "number" || $util.isString(message.data)))
+                    return "data: buffer expected";
+            if (message.dataType != null && message.hasOwnProperty("dataType"))
+                if (!$util.isString(message.dataType))
+                    return "dataType: string expected";
             return null;
         };
 
         /**
-         * Creates a Request message from a plain object. Also converts values to their respective internal types.
+         * Creates an Info message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {ritp.Request} Request
+         * @returns {ritp.Info} Info
          */
-        Request.fromObject = function fromObject(object) {
-            if (object instanceof $root.ritp.Request)
+        Info.fromObject = function fromObject(object) {
+            if (object instanceof $root.ritp.Info)
                 return object;
-            var message = new $root.ritp.Request();
-            if (object.path != null)
-                message.path = String(object.path);
-            if (object.info != null)
-                if (typeof object.info === "string")
-                    $util.base64.decode(object.info, message.info = $util.newBuffer($util.base64.length(object.info)), 0);
-                else if (object.info.length)
-                    message.info = object.info;
-            if (object.infoType != null)
-                message.infoType = String(object.infoType);
-            if (object.bufType != null)
-                message.bufType = String(object.bufType);
+            var message = new $root.ritp.Info();
+            if (object.version != null)
+                message.version = String(object.version);
+            if (object.data != null)
+                if (typeof object.data === "string")
+                    $util.base64.decode(object.data, message.data = $util.newBuffer($util.base64.length(object.data)), 0);
+                else if (object.data.length)
+                    message.data = object.data;
+            if (object.dataType != null)
+                message.dataType = String(object.dataType);
             return message;
         };
 
         /**
-         * Creates a plain object from a Request message. Also converts values to other types if specified.
+         * Creates a plain object from an Info message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @static
-         * @param {ritp.Request} message Request
+         * @param {ritp.Info} message Info
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        Request.toObject = function toObject(message, options) {
+        Info.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
             if (options.defaults) {
-                object.path = "";
+                object.version = "";
                 if (options.bytes === String)
-                    object.info = "";
+                    object.data = "";
                 else {
-                    object.info = [];
+                    object.data = [];
                     if (options.bytes !== Array)
-                        object.info = $util.newBuffer(object.info);
+                        object.data = $util.newBuffer(object.data);
                 }
-                object.infoType = "";
-                object.bufType = "";
+                object.dataType = "";
             }
-            if (message.path != null && message.hasOwnProperty("path"))
-                object.path = message.path;
-            if (message.info != null && message.hasOwnProperty("info"))
-                object.info = options.bytes === String ? $util.base64.encode(message.info, 0, message.info.length) : options.bytes === Array ? Array.prototype.slice.call(message.info) : message.info;
-            if (message.infoType != null && message.hasOwnProperty("infoType"))
-                object.infoType = message.infoType;
-            if (message.bufType != null && message.hasOwnProperty("bufType"))
-                object.bufType = message.bufType;
+            if (message.version != null && message.hasOwnProperty("version"))
+                object.version = message.version;
+            if (message.data != null && message.hasOwnProperty("data"))
+                object.data = options.bytes === String ? $util.base64.encode(message.data, 0, message.data.length) : options.bytes === Array ? Array.prototype.slice.call(message.data) : message.data;
+            if (message.dataType != null && message.hasOwnProperty("dataType"))
+                object.dataType = message.dataType;
             return object;
         };
 
         /**
-         * Converts this Request to JSON.
+         * Converts this Info to JSON.
          * @function toJSON
-         * @memberof ritp.Request
+         * @memberof ritp.Info
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        Request.prototype.toJSON = function toJSON() {
+        Info.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return Request;
+        return Info;
     })();
 
     ritp.Close = (function() {
@@ -1551,6 +801,630 @@ $root.ritp = (function() {
         })();
 
         return Close;
+    })();
+
+    ritp.Msg = (function() {
+
+        /**
+         * Properties of a Msg.
+         * @memberof ritp
+         * @interface IMsg
+         * @property {number|null} [streamId] Msg streamId
+         * @property {ritp.ICall|null} [call] Msg call
+         * @property {ritp.IClose|null} [close] Msg close
+         * @property {number|null} [pull] Msg pull
+         * @property {Uint8Array|null} [buf] Msg buf
+         * @property {ritp.IEnd|null} [end] Msg end
+         */
+
+        /**
+         * Constructs a new Msg.
+         * @memberof ritp
+         * @classdesc Represents a Msg.
+         * @implements IMsg
+         * @constructor
+         * @param {ritp.IMsg=} [properties] Properties to set
+         */
+        function Msg(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Msg streamId.
+         * @member {number} streamId
+         * @memberof ritp.Msg
+         * @instance
+         */
+        Msg.prototype.streamId = 0;
+
+        /**
+         * Msg call.
+         * @member {ritp.ICall|null|undefined} call
+         * @memberof ritp.Msg
+         * @instance
+         */
+        Msg.prototype.call = null;
+
+        /**
+         * Msg close.
+         * @member {ritp.IClose|null|undefined} close
+         * @memberof ritp.Msg
+         * @instance
+         */
+        Msg.prototype.close = null;
+
+        /**
+         * Msg pull.
+         * @member {number} pull
+         * @memberof ritp.Msg
+         * @instance
+         */
+        Msg.prototype.pull = 0;
+
+        /**
+         * Msg buf.
+         * @member {Uint8Array} buf
+         * @memberof ritp.Msg
+         * @instance
+         */
+        Msg.prototype.buf = $util.newBuffer([]);
+
+        /**
+         * Msg end.
+         * @member {ritp.IEnd|null|undefined} end
+         * @memberof ritp.Msg
+         * @instance
+         */
+        Msg.prototype.end = null;
+
+        // OneOf field names bound to virtual getters and setters
+        var $oneOfFields;
+
+        /**
+         * Msg type.
+         * @member {"call"|"close"|"pull"|"buf"|"end"|undefined} type
+         * @memberof ritp.Msg
+         * @instance
+         */
+        Object.defineProperty(Msg.prototype, "type", {
+            get: $util.oneOfGetter($oneOfFields = ["call", "close", "pull", "buf", "end"]),
+            set: $util.oneOfSetter($oneOfFields)
+        });
+
+        /**
+         * Creates a new Msg instance using the specified properties.
+         * @function create
+         * @memberof ritp.Msg
+         * @static
+         * @param {ritp.IMsg=} [properties] Properties to set
+         * @returns {ritp.Msg} Msg instance
+         */
+        Msg.create = function create(properties) {
+            return new Msg(properties);
+        };
+
+        /**
+         * Encodes the specified Msg message. Does not implicitly {@link ritp.Msg.verify|verify} messages.
+         * @function encode
+         * @memberof ritp.Msg
+         * @static
+         * @param {ritp.IMsg} message Msg message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Msg.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.streamId != null && Object.hasOwnProperty.call(message, "streamId"))
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.streamId);
+            if (message.call != null && Object.hasOwnProperty.call(message, "call"))
+                $root.ritp.Call.encode(message.call, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.close != null && Object.hasOwnProperty.call(message, "close"))
+                $root.ritp.Close.encode(message.close, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+            if (message.pull != null && Object.hasOwnProperty.call(message, "pull"))
+                writer.uint32(/* id 4, wireType 0 =*/32).uint32(message.pull);
+            if (message.buf != null && Object.hasOwnProperty.call(message, "buf"))
+                writer.uint32(/* id 5, wireType 2 =*/42).bytes(message.buf);
+            if (message.end != null && Object.hasOwnProperty.call(message, "end"))
+                $root.ritp.End.encode(message.end, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified Msg message, length delimited. Does not implicitly {@link ritp.Msg.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof ritp.Msg
+         * @static
+         * @param {ritp.IMsg} message Msg message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Msg.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a Msg message from the specified reader or buffer.
+         * @function decode
+         * @memberof ritp.Msg
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {ritp.Msg} Msg
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Msg.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Msg();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.streamId = reader.uint32();
+                    break;
+                case 2:
+                    message.call = $root.ritp.Call.decode(reader, reader.uint32());
+                    break;
+                case 3:
+                    message.close = $root.ritp.Close.decode(reader, reader.uint32());
+                    break;
+                case 4:
+                    message.pull = reader.uint32();
+                    break;
+                case 5:
+                    message.buf = reader.bytes();
+                    break;
+                case 6:
+                    message.end = $root.ritp.End.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a Msg message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof ritp.Msg
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {ritp.Msg} Msg
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Msg.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a Msg message.
+         * @function verify
+         * @memberof ritp.Msg
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        Msg.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            var properties = {};
+            if (message.streamId != null && message.hasOwnProperty("streamId"))
+                if (!$util.isInteger(message.streamId))
+                    return "streamId: integer expected";
+            if (message.call != null && message.hasOwnProperty("call")) {
+                properties.type = 1;
+                {
+                    var error = $root.ritp.Call.verify(message.call);
+                    if (error)
+                        return "call." + error;
+                }
+            }
+            if (message.close != null && message.hasOwnProperty("close")) {
+                if (properties.type === 1)
+                    return "type: multiple values";
+                properties.type = 1;
+                {
+                    var error = $root.ritp.Close.verify(message.close);
+                    if (error)
+                        return "close." + error;
+                }
+            }
+            if (message.pull != null && message.hasOwnProperty("pull")) {
+                if (properties.type === 1)
+                    return "type: multiple values";
+                properties.type = 1;
+                if (!$util.isInteger(message.pull))
+                    return "pull: integer expected";
+            }
+            if (message.buf != null && message.hasOwnProperty("buf")) {
+                if (properties.type === 1)
+                    return "type: multiple values";
+                properties.type = 1;
+                if (!(message.buf && typeof message.buf.length === "number" || $util.isString(message.buf)))
+                    return "buf: buffer expected";
+            }
+            if (message.end != null && message.hasOwnProperty("end")) {
+                if (properties.type === 1)
+                    return "type: multiple values";
+                properties.type = 1;
+                {
+                    var error = $root.ritp.End.verify(message.end);
+                    if (error)
+                        return "end." + error;
+                }
+            }
+            return null;
+        };
+
+        /**
+         * Creates a Msg message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof ritp.Msg
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {ritp.Msg} Msg
+         */
+        Msg.fromObject = function fromObject(object) {
+            if (object instanceof $root.ritp.Msg)
+                return object;
+            var message = new $root.ritp.Msg();
+            if (object.streamId != null)
+                message.streamId = object.streamId >>> 0;
+            if (object.call != null) {
+                if (typeof object.call !== "object")
+                    throw TypeError(".ritp.Msg.call: object expected");
+                message.call = $root.ritp.Call.fromObject(object.call);
+            }
+            if (object.close != null) {
+                if (typeof object.close !== "object")
+                    throw TypeError(".ritp.Msg.close: object expected");
+                message.close = $root.ritp.Close.fromObject(object.close);
+            }
+            if (object.pull != null)
+                message.pull = object.pull >>> 0;
+            if (object.buf != null)
+                if (typeof object.buf === "string")
+                    $util.base64.decode(object.buf, message.buf = $util.newBuffer($util.base64.length(object.buf)), 0);
+                else if (object.buf.length)
+                    message.buf = object.buf;
+            if (object.end != null) {
+                if (typeof object.end !== "object")
+                    throw TypeError(".ritp.Msg.end: object expected");
+                message.end = $root.ritp.End.fromObject(object.end);
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a Msg message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof ritp.Msg
+         * @static
+         * @param {ritp.Msg} message Msg
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        Msg.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                object.streamId = 0;
+            if (message.streamId != null && message.hasOwnProperty("streamId"))
+                object.streamId = message.streamId;
+            if (message.call != null && message.hasOwnProperty("call")) {
+                object.call = $root.ritp.Call.toObject(message.call, options);
+                if (options.oneofs)
+                    object.type = "call";
+            }
+            if (message.close != null && message.hasOwnProperty("close")) {
+                object.close = $root.ritp.Close.toObject(message.close, options);
+                if (options.oneofs)
+                    object.type = "close";
+            }
+            if (message.pull != null && message.hasOwnProperty("pull")) {
+                object.pull = message.pull;
+                if (options.oneofs)
+                    object.type = "pull";
+            }
+            if (message.buf != null && message.hasOwnProperty("buf")) {
+                object.buf = options.bytes === String ? $util.base64.encode(message.buf, 0, message.buf.length) : options.bytes === Array ? Array.prototype.slice.call(message.buf) : message.buf;
+                if (options.oneofs)
+                    object.type = "buf";
+            }
+            if (message.end != null && message.hasOwnProperty("end")) {
+                object.end = $root.ritp.End.toObject(message.end, options);
+                if (options.oneofs)
+                    object.type = "end";
+            }
+            return object;
+        };
+
+        /**
+         * Converts this Msg to JSON.
+         * @function toJSON
+         * @memberof ritp.Msg
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        Msg.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return Msg;
+    })();
+
+    ritp.Call = (function() {
+
+        /**
+         * Properties of a Call.
+         * @memberof ritp
+         * @interface ICall
+         * @property {string|null} [fn] Call fn
+         * @property {Uint8Array|null} [data] Call data
+         * @property {string|null} [dataType] Call dataType
+         * @property {string|null} [bufType] Call bufType
+         */
+
+        /**
+         * Constructs a new Call.
+         * @memberof ritp
+         * @classdesc Represents a Call.
+         * @implements ICall
+         * @constructor
+         * @param {ritp.ICall=} [properties] Properties to set
+         */
+        function Call(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Call fn.
+         * @member {string} fn
+         * @memberof ritp.Call
+         * @instance
+         */
+        Call.prototype.fn = "";
+
+        /**
+         * Call data.
+         * @member {Uint8Array} data
+         * @memberof ritp.Call
+         * @instance
+         */
+        Call.prototype.data = $util.newBuffer([]);
+
+        /**
+         * Call dataType.
+         * @member {string} dataType
+         * @memberof ritp.Call
+         * @instance
+         */
+        Call.prototype.dataType = "";
+
+        /**
+         * Call bufType.
+         * @member {string} bufType
+         * @memberof ritp.Call
+         * @instance
+         */
+        Call.prototype.bufType = "";
+
+        /**
+         * Creates a new Call instance using the specified properties.
+         * @function create
+         * @memberof ritp.Call
+         * @static
+         * @param {ritp.ICall=} [properties] Properties to set
+         * @returns {ritp.Call} Call instance
+         */
+        Call.create = function create(properties) {
+            return new Call(properties);
+        };
+
+        /**
+         * Encodes the specified Call message. Does not implicitly {@link ritp.Call.verify|verify} messages.
+         * @function encode
+         * @memberof ritp.Call
+         * @static
+         * @param {ritp.ICall} message Call message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Call.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.fn != null && Object.hasOwnProperty.call(message, "fn"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.fn);
+            if (message.data != null && Object.hasOwnProperty.call(message, "data"))
+                writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.data);
+            if (message.dataType != null && Object.hasOwnProperty.call(message, "dataType"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.dataType);
+            if (message.bufType != null && Object.hasOwnProperty.call(message, "bufType"))
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.bufType);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified Call message, length delimited. Does not implicitly {@link ritp.Call.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof ritp.Call
+         * @static
+         * @param {ritp.ICall} message Call message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Call.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a Call message from the specified reader or buffer.
+         * @function decode
+         * @memberof ritp.Call
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {ritp.Call} Call
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Call.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Call();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.fn = reader.string();
+                    break;
+                case 2:
+                    message.data = reader.bytes();
+                    break;
+                case 3:
+                    message.dataType = reader.string();
+                    break;
+                case 4:
+                    message.bufType = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a Call message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof ritp.Call
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {ritp.Call} Call
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Call.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a Call message.
+         * @function verify
+         * @memberof ritp.Call
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        Call.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.fn != null && message.hasOwnProperty("fn"))
+                if (!$util.isString(message.fn))
+                    return "fn: string expected";
+            if (message.data != null && message.hasOwnProperty("data"))
+                if (!(message.data && typeof message.data.length === "number" || $util.isString(message.data)))
+                    return "data: buffer expected";
+            if (message.dataType != null && message.hasOwnProperty("dataType"))
+                if (!$util.isString(message.dataType))
+                    return "dataType: string expected";
+            if (message.bufType != null && message.hasOwnProperty("bufType"))
+                if (!$util.isString(message.bufType))
+                    return "bufType: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a Call message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof ritp.Call
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {ritp.Call} Call
+         */
+        Call.fromObject = function fromObject(object) {
+            if (object instanceof $root.ritp.Call)
+                return object;
+            var message = new $root.ritp.Call();
+            if (object.fn != null)
+                message.fn = String(object.fn);
+            if (object.data != null)
+                if (typeof object.data === "string")
+                    $util.base64.decode(object.data, message.data = $util.newBuffer($util.base64.length(object.data)), 0);
+                else if (object.data.length)
+                    message.data = object.data;
+            if (object.dataType != null)
+                message.dataType = String(object.dataType);
+            if (object.bufType != null)
+                message.bufType = String(object.bufType);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a Call message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof ritp.Call
+         * @static
+         * @param {ritp.Call} message Call
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        Call.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.fn = "";
+                if (options.bytes === String)
+                    object.data = "";
+                else {
+                    object.data = [];
+                    if (options.bytes !== Array)
+                        object.data = $util.newBuffer(object.data);
+                }
+                object.dataType = "";
+                object.bufType = "";
+            }
+            if (message.fn != null && message.hasOwnProperty("fn"))
+                object.fn = message.fn;
+            if (message.data != null && message.hasOwnProperty("data"))
+                object.data = options.bytes === String ? $util.base64.encode(message.data, 0, message.data.length) : options.bytes === Array ? Array.prototype.slice.call(message.data) : message.data;
+            if (message.dataType != null && message.hasOwnProperty("dataType"))
+                object.dataType = message.dataType;
+            if (message.bufType != null && message.hasOwnProperty("bufType"))
+                object.bufType = message.bufType;
+            return object;
+        };
+
+        /**
+         * Converts this Call to JSON.
+         * @function toJSON
+         * @memberof ritp.Call
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        Call.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return Call;
     })();
 
     ritp.End = (function() {
