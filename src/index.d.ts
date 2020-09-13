@@ -23,10 +23,4 @@ export interface StreamCall {
     bufPuller: Subject<number>;
 }
 export declare const fromH5WebSocket: (url: string) => Observable<Socket>;
-export declare const initWith: (myInfo: ritp.IInfo) => (sockets: Observable<Socket>) => Observable<{
-    remoteInfo: ritp.Info;
-    msgs: Observable<ritp.Msg>;
-    msgPuller: Subject<number>;
-    register: (fn: string) => Observable<StreamCall>;
-    stream: (call: ritp.ICall) => Stream;
-}>;
+export declare const initWith: (myInfo: ritp.IInfo) => (sockets: Observable<Socket>) => Observable<Connection>;
