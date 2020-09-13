@@ -1,5 +1,5 @@
-import { merge, Observable, Subject, of, throwError, concat, from, Observer } from 'rxjs'
-import { map, scan, ignoreElements, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, filter, share, last, catchError, endWith, startWith, distinctUntilChanged, switchMap } from "rxjs/operators";
+import { merge, Observable, Subject, of, throwError, concat, from, Observer, BehaviorSubject } from 'rxjs'
+import { map, scan, ignoreElements, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, filter, share, last, catchError, endWith, startWith, distinctUntilChanged, repeat } from "rxjs/operators";
 import { ritp } from "./pb";
 
 export interface Socket {
@@ -171,7 +171,8 @@ const toGroupedInput = (buffers: Observable<Uint8Array>) => {
 
 const toOutputContext = (pullsToGetMsg: Observable<number>) => {
     const msgSender = new Subject<ritp.IMsg>()
-    const sendableMsgsAmounts = merge(msgSender.pipe(map(_ => -1)), pullsToGetMsg).pipe(
+    const sendingCount = new BehaviorSubject(0)
+    const sendableMsgsAmounts = merge(sendingCount, pullsToGetMsg).pipe(
         scan((acc, num) => acc + num, 0),
         shareReplay(1),
     )
@@ -181,23 +182,24 @@ const toOutputContext = (pullsToGetMsg: Observable<number>) => {
         shareReplay(1),
     )
     const outputQueue = new Queue<ritp.IMsg>()
-    const msgFramesToSend = isMsgSendable.pipe(
-        switchMap(sendable =>
-            sendable ?
-                concat(
-                    sendableMsgsAmounts.pipe(
-                        take(1),
-                        flatMap(n => from(outputQueue).pipe(
-                            take(n),
-                        )),
-                    ),
-                    msgSender
-                ) :
-                msgSender.pipe(
-                    tap(msg => outputQueue.push(msg)),
-                    ignoreElements(),
-                )
+    const msgFramesToSend = concat(
+        sendableMsgsAmounts.pipe(
+            take(1),
+            flatMap(n => from(outputQueue).pipe(
+                take(n),
+            )),
         ),
+        msgSender.pipe(
+            takeUntil(isMsgSendable.pipe(filter(sendable => !sendable))),
+        ),
+        msgSender.pipe(
+            tap(msg => outputQueue.push(msg)),
+            ignoreElements(),
+            takeUntil(isMsgSendable.pipe(filter(sendable => sendable))),
+        ),
+    ).pipe(
+        repeat(),
+        tap(_ => sendingCount.next(-1)),
         map(msg => ({ msg })),
     )
     const msgPuller = new Subject<number>()
