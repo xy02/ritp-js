@@ -1,6 +1,6 @@
 {
   "name": "ritp-js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "an implementation of RITP",
   "repository": {
     "type": "git",
@@ -23,6 +23,6 @@
   },
   "dependencies": {
     "protobufjs": "~6.10.1",
-    "rxjs": "^6.6.2"
+    "rxjs": "^6.6.3"
   }
 }

@@ -45,14 +45,20 @@ export const fromH5WebSocket = (url: string) => new Observable<Socket>(s => {
             ws.removeEventListener('close', closeCb)
         }
     })
-    sender.pipe(
-        takeUntil(theEnd),
-    ).subscribe(
-        buf => ws.send(buf),
-        err => ws.close(4000, err.toString()),
-        () => ws.close()
-    )
     const buffers = new Observable<Uint8Array>(s2 => {
+        sender.pipe(
+            takeUntil(theEnd),
+        ).subscribe(
+            buf => ws.send(buf),
+            err => {
+                ws.close(4000, err.toString())
+                s2.error(err)
+            },
+            () => {
+                ws.close()
+                s2.complete()
+            }
+        )
         const cb = (ev: MessageEvent) => {
             const buf = new Uint8Array(ev.data)
             // console.info("received:", buf)
@@ -65,7 +71,6 @@ export const fromH5WebSocket = (url: string) => new Observable<Socket>(s => {
         }
     }).pipe(
         takeUntil(theEnd),
-        takeUntil(sender.pipe(last())),
         share(),
     )
     ws.onclose = function (ev) {
@@ -78,9 +83,6 @@ export const fromH5WebSocket = (url: string) => new Observable<Socket>(s => {
             sender,
         })
         s.complete()
-    }
-    return () => {
-        sender.complete()
     }
 })
 
@@ -107,19 +109,27 @@ class Queue<T> {
 }
 
 //比groupBy+find更有效率
-const getSubValues = <T, K>(values: Observable<T>, keySelector: (value: T) => K) => (key: K): Observable<T> => {
-    const valueObserverMap = new Map<K, Observer<T>>()
+const getSubValues = <T, K>(values: Observable<T>, keySelector: (value: T) => K) => {
+    const m = new Map<K, Set<Observer<T>>>()
     const lastValue = values.pipe(
         tap(v => {
-            const observer = valueObserverMap.get(keySelector(v))
-            if (observer) observer.next(v)
+            const observerSet = m.get(keySelector(v))
+            if (!observerSet) return
+            observerSet.forEach(observer => observer.next(v))
         }),
         last(),
+        share(),
     )
-    return new Observable<T>(s => {
-        valueObserverMap.set(key, s)
+    return (key: K) => new Observable<T>(s => {
+        let observerSet = m.get(key)
+        if (!observerSet) {
+            observerSet = new Set<Observer<T>>()
+            m.set(key, observerSet)
+        }
+        observerSet.add(s)
         return () => {
-            valueObserverMap.delete(key)
+            observerSet.delete(s)
+            if (observerSet.size == 0) m.delete(key)
         }
     }).pipe(
         takeUntil(lastValue),
@@ -234,13 +244,14 @@ const registerWith = (
             take(1),
             flatMap(ev => ev.end.reason != ritp.End.Reason.COMPLETE ? throwError(ev.end) : of(ev.end)),
         )
-        const inputBufs = getBufMsgsByStreamId(streamId).pipe(
+        const bufPuller = new Subject<number>()
+        const bufs = getBufMsgsByStreamId(streamId).pipe(
             map(ev => ev.buf),
             takeUntil(theEnd),
+            takeUntil(bufPuller.pipe(last())),
             share(),
         )
-        const bufPuller = new Subject<number>()
-        const bufsOverflow = merge(inputBufs.pipe(map(_ => -1)), bufPuller).pipe(
+        const bufsOverflow = merge(bufs.pipe(map(_ => -1)), bufPuller).pipe(
             scan((acc, num) => acc + num, 0),
             filter(acc => acc < 0),
             take(1),
@@ -249,17 +260,15 @@ const registerWith = (
                 message: 'input buf overflow'
             })),
         )
-        const bufs = inputBufs.pipe(
-            takeUntil(bufsOverflow),
-        )
         const pullMsgsToSend = bufPuller.pipe(
             map(pull => ({ streamId, pull })),
-            endWith({ streamId, close: { reason: ritp.Close.Reason.APPLICATION_ERROR, message:"" } }),
+            endWith({ streamId, close: { reason: ritp.Close.Reason.APPLICATION_ERROR, message: "" } }),
             catchError(err => of({ streamId, close: { reason: ritp.Close.Reason.APPLICATION_ERROR, message: err.message } })),
+            takeUntil(bufsOverflow),
         )
         pullMsgsToSend.subscribe(msgSender) //side effect
         return { call, bufs, bufPuller }
-    })
+    }),
 )
 
 const streamWith = (
@@ -303,7 +312,7 @@ const streamWith = (
     return { pulls, sendableAmounts, bufSender, isSendable }
 }
 
-export const initWith = (myInfo: ritp.IInfo) => (sockets: Observable<Socket>) => sockets.pipe(
+export const initWith = (myInfo: ritp.IInfo) => (sockets: Observable<Socket>): Observable<Connection> => sockets.pipe(
     flatMap(({ buffers, sender }) => {
         const { msgs, pullsToGetMsg, info, remoteClose, errInfoMoreThanOnce } = toGroupedInput(buffers)
         const { msgSender, msgPuller, pullFramesToSend, msgFramesToSend, newStreamId } = toOutputContext(pullsToGetMsg)
