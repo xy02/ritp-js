@@ -1,5 +1,5 @@
-import { merge, Observable, Subject, of, throwError, concat, from, Observer, BehaviorSubject } from 'rxjs'
-import { map, scan, ignoreElements, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, filter, share, last, catchError, endWith, startWith, distinctUntilChanged, repeat } from "rxjs/operators";
+import { merge, Observable, Subject, of, throwError, from, Observer, BehaviorSubject, EMPTY } from 'rxjs'
+import { map, scan, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, filter, share, last, catchError, endWith, startWith, distinctUntilChanged, mapTo } from "rxjs/operators";
 import { ritp } from "./pb";
 
 export interface Socket {
@@ -170,36 +170,29 @@ const toGroupedInput = (buffers: Observable<Uint8Array>) => {
 }
 
 const toOutputContext = (pullsToGetMsg: Observable<number>) => {
+    const outputQueue = new Queue<ritp.IMsg>()
+    const msgsFromQueue = pullsToGetMsg.pipe(
+        flatMap(pull => from(outputQueue).pipe(
+            take(pull),
+        )),
+        share(),
+    )
     const msgSender = new Subject<ritp.IMsg>()
-    const sendingCount = new BehaviorSubject(0)
-    const sendableMsgsAmounts = merge(sendingCount, pullsToGetMsg).pipe(
+    const sendNotifier = new BehaviorSubject(0)
+    const sendableMsgsAmounts = merge(sendNotifier, pullsToGetMsg, msgsFromQueue.pipe(mapTo(-1))).pipe(
         scan((acc, num) => acc + num, 0),
         shareReplay(1),
     )
-    const isMsgSendable = sendableMsgsAmounts.pipe(
-        map(amount => amount > 0),
-        distinctUntilChanged(),
-        shareReplay(1),
-    )
-    const outputQueue = new Queue<ritp.IMsg>()
-    const msgFramesToSend = concat(
-        sendableMsgsAmounts.pipe(
-            take(1),
-            flatMap(n => from(outputQueue).pipe(
-                take(n),
+    const msgFramesToSend = merge(
+        msgsFromQueue,
+        msgSender.pipe(
+            withLatestFrom(sendableMsgsAmounts),
+            flatMap(([msg, amount]) => amount > 0 ? of(msg) : EMPTY.pipe(
+                tap({ complete: () => outputQueue.push(msg) })
             )),
-        ),
-        msgSender.pipe(
-            takeUntil(isMsgSendable.pipe(filter(sendable => !sendable))),
-        ),
-        msgSender.pipe(
-            tap(msg => outputQueue.push(msg)),
-            ignoreElements(),
-            takeUntil(isMsgSendable.pipe(filter(sendable => sendable))),
+            tap(_ => sendNotifier.next(-1)),
         ),
     ).pipe(
-        repeat(),
-        tap(_ => sendingCount.next(-1)),
         map(msg => ({ msg })),
     )
     const msgPuller = new Subject<number>()
@@ -290,10 +283,11 @@ const streamWith = (
         share(),
     )
     const bufSender = new Subject<Uint8Array>()
+    const sendNotifier = new BehaviorSubject(0)
     const bufs = bufSender.pipe(
         takeUntil(remoteClose),
     )
-    const sendableAmounts = merge(bufs.pipe(map(_ => -1)), pulls).pipe(
+    const sendableAmounts = merge(sendNotifier, pulls).pipe(
         scan((acc, num) => acc + num, 0),
         shareReplay(1),
     )
@@ -306,6 +300,7 @@ const streamWith = (
         withLatestFrom(isSendable),
         filter(([_, sendable]) => sendable),
         map(([buf, _]) => ({ streamId, buf })),
+        tap(_ => sendNotifier.next(-1)),
         startWith({ streamId, call }),
         endWith({ streamId, end: { reason: ritp.End.Reason.COMPLETE } }),
         catchError(err => of({ streamId, end: { reason: ritp.End.Reason.CANCEL, message: err.message } })),
