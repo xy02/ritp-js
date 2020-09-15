@@ -1174,6 +1174,7 @@ $root.ritp = (function() {
          * @property {Uint8Array|null} [data] Call data
          * @property {string|null} [dataType] Call dataType
          * @property {string|null} [bufType] Call bufType
+         * @property {string|null} [callback] Call callback
          */
 
         /**
@@ -1224,6 +1225,14 @@ $root.ritp = (function() {
         Call.prototype.bufType = "";
 
         /**
+         * Call callback.
+         * @member {string} callback
+         * @memberof ritp.Call
+         * @instance
+         */
+        Call.prototype.callback = "";
+
+        /**
          * Creates a new Call instance using the specified properties.
          * @function create
          * @memberof ritp.Call
@@ -1255,6 +1264,8 @@ $root.ritp = (function() {
                 writer.uint32(/* id 3, wireType 2 =*/26).string(message.dataType);
             if (message.bufType != null && Object.hasOwnProperty.call(message, "bufType"))
                 writer.uint32(/* id 4, wireType 2 =*/34).string(message.bufType);
+            if (message.callback != null && Object.hasOwnProperty.call(message, "callback"))
+                writer.uint32(/* id 5, wireType 2 =*/42).string(message.callback);
             return writer;
         };
 
@@ -1300,6 +1311,9 @@ $root.ritp = (function() {
                     break;
                 case 4:
                     message.bufType = reader.string();
+                    break;
+                case 5:
+                    message.callback = reader.string();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1348,6 +1362,9 @@ $root.ritp = (function() {
             if (message.bufType != null && message.hasOwnProperty("bufType"))
                 if (!$util.isString(message.bufType))
                     return "bufType: string expected";
+            if (message.callback != null && message.hasOwnProperty("callback"))
+                if (!$util.isString(message.callback))
+                    return "callback: string expected";
             return null;
         };
 
@@ -1374,6 +1391,8 @@ $root.ritp = (function() {
                 message.dataType = String(object.dataType);
             if (object.bufType != null)
                 message.bufType = String(object.bufType);
+            if (object.callback != null)
+                message.callback = String(object.callback);
             return message;
         };
 
@@ -1401,6 +1420,7 @@ $root.ritp = (function() {
                 }
                 object.dataType = "";
                 object.bufType = "";
+                object.callback = "";
             }
             if (message.fn != null && message.hasOwnProperty("fn"))
                 object.fn = message.fn;
@@ -1410,6 +1430,8 @@ $root.ritp = (function() {
                 object.dataType = message.dataType;
             if (message.bufType != null && message.hasOwnProperty("bufType"))
                 object.bufType = message.bufType;
+            if (message.callback != null && message.hasOwnProperty("callback"))
+                object.callback = message.callback;
             return object;
         };
 

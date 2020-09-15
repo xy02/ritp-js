@@ -22,5 +22,6 @@ export interface StreamCall {
     bufs: Observable<Uint8Array>;
     bufPuller: Subject<number>;
 }
+export declare const getUint8ArrayFromStr: (str: string) => Observable<Uint8Array>;
 export declare const fromH5WebSocket: (url: string) => Observable<Socket>;
 export declare const initWith: (myInfo: ritp.IInfo) => (sockets: Observable<Socket>) => Observable<Connection>;

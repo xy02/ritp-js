@@ -63,7 +63,7 @@ message Msg {
     }
 }
 
-//请求对端开始一条流
+//调用，请求对端开始一条流
 message Call {
     //功能名，此功能名应是一个可以在服务中心注册的服务方法
     string fn = 1;
@@ -73,6 +73,8 @@ message Call {
     string data_type = 3;
     //Msg.buf的类型
     string buf_type = 4;
+    //回调地址， 例："accReply", "wss://hostname:8080/path?fn=accReply"
+    string callback = 5;
 }
 
 //结束流

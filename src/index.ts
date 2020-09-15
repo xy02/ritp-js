@@ -32,6 +32,18 @@ export interface StreamCall {
     bufPuller: Subject<number>
 }
 
+export const getUint8ArrayFromStr = (str:string) => new Observable<Uint8Array>(s => {
+    if(typeof str != 'string') return s.error('expect a string')
+    const b = new Blob([str])
+    const fr = new FileReader()
+    fr.readAsArrayBuffer(b)
+    fr.onloadend = function () {
+        const buf = new Uint8Array(fr.result as Uint8Array)
+        s.next(buf)
+        s.complete()
+    }
+})
+
 export const fromH5WebSocket = (url: string) => new Observable<Socket>(s => {
     const ws = new WebSocket(url, 'ritp')
     ws.binaryType = "arraybuffer"
@@ -169,7 +181,7 @@ const toGroupedInput = (buffers: Observable<Uint8Array>) => {
     return { msgs, pullsToGetMsg, info, remoteClose, errInfoMoreThanOnce }
 }
 
-const toOutputContext = (pullsToGetMsg: Observable<number>) => {
+const toOutputContext = (msgs: Observable<ritp.Msg>, pullsToGetMsg: Observable<number>) => {
     const outputQueue = new Queue<ritp.IMsg>()
     const msgsFromQueue = pullsToGetMsg.pipe(
         flatMap(pull => from(outputQueue).pipe(
@@ -196,7 +208,11 @@ const toOutputContext = (pullsToGetMsg: Observable<number>) => {
         map(msg => ({ msg })),
     )
     const msgPuller = new Subject<number>()
-    const pullFramesToSend = msgPuller.pipe(
+    const pullIncrements = getPullIncrements(msgs, msgPuller, {
+        reason: ritp.Close.Reason.PROTOCOL_ERROR,
+        message: 'input msg overflow'
+    })
+    const pullFramesToSend = pullIncrements.pipe(
         map(pull => ({ pull })),
     )
     let sid = 0
@@ -204,16 +220,7 @@ const toOutputContext = (pullsToGetMsg: Observable<number>) => {
     return { msgSender, msgPuller, pullFramesToSend, msgFramesToSend, newStreamId }
 }
 
-const toInputContext = (msgs: Observable<ritp.Msg>, msgPuller: Subject<number>) => {
-    const errInputMsgsOverflow = merge(msgs.pipe(map(_ => -1)), msgPuller).pipe(
-        scan((acc, num) => acc + num, 0),
-        filter(acc => acc < 0),
-        take(1),
-        flatMap(_ => throwError({
-            reason: ritp.Close.Reason.PROTOCOL_ERROR,
-            message: 'input msg overflow'
-        })),
-    )
+const toInputContext = (msgs: Observable<ritp.Msg>) => {
     const getMsgsByType = getSubValues(msgs, msg => msg.type)
     const closeMsgs = getMsgsByType('close')
     const getCloseMsgsByStreamId = getSubValues(closeMsgs, msg => msg.streamId)
@@ -225,7 +232,7 @@ const toInputContext = (msgs: Observable<ritp.Msg>, msgPuller: Subject<number>) 
     const getBufMsgsByStreamId = getSubValues(bufMsgs, msg => msg.streamId)
     const callMsgs = getMsgsByType('call')
     const getCallMsgsByFn = getSubValues(callMsgs, msg => msg.call.fn)
-    return { errInputMsgsOverflow, getCallMsgsByFn, getCloseMsgsByStreamId, getPullMsgsByStreamId, getEndMsgsByStreamId, getBufMsgsByStreamId }
+    return { getCallMsgsByFn, getCloseMsgsByStreamId, getPullMsgsByStreamId, getEndMsgsByStreamId, getBufMsgsByStreamId }
 }
 
 const registerWith = (
@@ -246,25 +253,51 @@ const registerWith = (
             takeUntil(bufPuller.pipe(last())),
             share(),
         )
-        const bufsOverflow = merge(bufs.pipe(map(_ => -1)), bufPuller).pipe(
-            scan((acc, num) => acc + num, 0),
-            filter(acc => acc < 0),
-            take(1),
-            flatMap(_ => throwError({
-                reason: ritp.Close.Reason.PROTOCOL_ERROR,
-                message: 'input buf overflow'
-            })),
-        )
-        const pullMsgsToSend = bufPuller.pipe(
+        const pullIncrements = getPullIncrements(bufs, bufPuller, {
+            reason: ritp.Close.Reason.PROTOCOL_ERROR,
+            message: 'input buf overflow'
+        })
+        const pullMsgsToSend = pullIncrements.pipe(
             map(pull => ({ streamId, pull })),
             endWith({ streamId, close: { reason: ritp.Close.Reason.APPLICATION_ERROR, message: "" } }),
             catchError(err => of({ streamId, close: { reason: ritp.Close.Reason.APPLICATION_ERROR, message: err.message } })),
-            takeUntil(bufsOverflow),
         )
         pullMsgsToSend.subscribe(msgSender) //side effect
         return { call, bufs, bufPuller }
     }),
 )
+
+const getPullIncrements = (msgs: Observable<any>, pulls: Observable<number>, overflowErr: any) => new Observable<number>(s => {
+    let sub = merge(msgs.pipe(mapTo(-1)), pulls).pipe(
+        scan(({ windowSize, increment, decrement }, num) => {
+            if (num > 0) increment += num
+            else decrement -= num
+            if (decrement > windowSize) throw overflowErr
+            if (decrement >= windowSize / 2) {
+                windowSize = windowSize - decrement + increment
+                if (increment > 0) s.next(increment)
+                increment = 0
+                decrement = 0
+            }
+            return {
+                windowSize,
+                increment,
+                decrement,
+            }
+        }, {
+            windowSize: 0,
+            increment: 0,
+            decrement: 0,
+        }),
+    ).subscribe(
+        _ => { },
+        s.error,
+        s.complete,
+    )
+    return () => {
+        sub.unsubscribe()
+    }
+})
 
 const streamWith = (
     newStreamId: () => number,
@@ -312,12 +345,11 @@ const streamWith = (
 export const initWith = (myInfo: ritp.IInfo) => (sockets: Observable<Socket>): Observable<Connection> => sockets.pipe(
     flatMap(({ buffers, sender }) => {
         const { msgs, pullsToGetMsg, info, remoteClose, errInfoMoreThanOnce } = toGroupedInput(buffers)
-        const { msgSender, msgPuller, pullFramesToSend, msgFramesToSend, newStreamId } = toOutputContext(pullsToGetMsg)
-        const { errInputMsgsOverflow, getCloseMsgsByStreamId, getPullMsgsByStreamId,
-            getCallMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId } = toInputContext(msgs, msgPuller)
+        const { msgSender, msgPuller, pullFramesToSend, msgFramesToSend, newStreamId } = toOutputContext(msgs, pullsToGetMsg)
+        const { getCloseMsgsByStreamId, getPullMsgsByStreamId,
+            getCallMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId } = toInputContext(msgs)
         const errs = merge(
             errInfoMoreThanOnce,
-            errInputMsgsOverflow,
         )
         merge(msgFramesToSend, pullFramesToSend).pipe(
             startWith({ info: myInfo }),

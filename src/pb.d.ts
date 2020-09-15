@@ -457,6 +457,9 @@ export namespace ritp {
 
         /** Call bufType */
         bufType?: (string|null);
+
+        /** Call callback */
+        callback?: (string|null);
     }
 
     /** Represents a Call. */
@@ -479,6 +482,9 @@ export namespace ritp {
 
         /** Call bufType. */
         public bufType: string;
+
+        /** Call callback. */
+        public callback: string;
 
         /**
          * Creates a new Call instance using the specified properties.
