@@ -73,8 +73,8 @@ message Header {
     string data_type = 3;
     //Msg.buf的类型
     string buf_type = 4;
-    //应答地址， 例："accReply", "wss://hostname:8080/path?fn=accReply"
-    string reply_to = 5;
+    //Consumer处理结果的输出地址， 例："accReply", "wss://hostname:8080/path?fn=accReply"
+    string output_to = 5;
 }
 
 //结束流

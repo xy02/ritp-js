@@ -458,8 +458,8 @@ export namespace ritp {
         /** Header bufType */
         bufType?: (string|null);
 
-        /** Header replyTo */
-        replyTo?: (string|null);
+        /** Header outputTo */
+        outputTo?: (string|null);
     }
 
     /** Represents a Header. */
@@ -483,8 +483,8 @@ export namespace ritp {
         /** Header bufType. */
         public bufType: string;
 
-        /** Header replyTo. */
-        public replyTo: string;
+        /** Header outputTo. */
+        public outputTo: string;
 
         /**
          * Creates a new Header instance using the specified properties.

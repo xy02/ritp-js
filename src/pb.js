@@ -1174,7 +1174,7 @@ $root.ritp = (function() {
          * @property {Uint8Array|null} [data] Header data
          * @property {string|null} [dataType] Header dataType
          * @property {string|null} [bufType] Header bufType
-         * @property {string|null} [replyTo] Header replyTo
+         * @property {string|null} [outputTo] Header outputTo
          */
 
         /**
@@ -1225,12 +1225,12 @@ $root.ritp = (function() {
         Header.prototype.bufType = "";
 
         /**
-         * Header replyTo.
-         * @member {string} replyTo
+         * Header outputTo.
+         * @member {string} outputTo
          * @memberof ritp.Header
          * @instance
          */
-        Header.prototype.replyTo = "";
+        Header.prototype.outputTo = "";
 
         /**
          * Creates a new Header instance using the specified properties.
@@ -1264,8 +1264,8 @@ $root.ritp = (function() {
                 writer.uint32(/* id 3, wireType 2 =*/26).string(message.dataType);
             if (message.bufType != null && Object.hasOwnProperty.call(message, "bufType"))
                 writer.uint32(/* id 4, wireType 2 =*/34).string(message.bufType);
-            if (message.replyTo != null && Object.hasOwnProperty.call(message, "replyTo"))
-                writer.uint32(/* id 5, wireType 2 =*/42).string(message.replyTo);
+            if (message.outputTo != null && Object.hasOwnProperty.call(message, "outputTo"))
+                writer.uint32(/* id 5, wireType 2 =*/42).string(message.outputTo);
             return writer;
         };
 
@@ -1313,7 +1313,7 @@ $root.ritp = (function() {
                     message.bufType = reader.string();
                     break;
                 case 5:
-                    message.replyTo = reader.string();
+                    message.outputTo = reader.string();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1362,9 +1362,9 @@ $root.ritp = (function() {
             if (message.bufType != null && message.hasOwnProperty("bufType"))
                 if (!$util.isString(message.bufType))
                     return "bufType: string expected";
-            if (message.replyTo != null && message.hasOwnProperty("replyTo"))
-                if (!$util.isString(message.replyTo))
-                    return "replyTo: string expected";
+            if (message.outputTo != null && message.hasOwnProperty("outputTo"))
+                if (!$util.isString(message.outputTo))
+                    return "outputTo: string expected";
             return null;
         };
 
@@ -1391,8 +1391,8 @@ $root.ritp = (function() {
                 message.dataType = String(object.dataType);
             if (object.bufType != null)
                 message.bufType = String(object.bufType);
-            if (object.replyTo != null)
-                message.replyTo = String(object.replyTo);
+            if (object.outputTo != null)
+                message.outputTo = String(object.outputTo);
             return message;
         };
 
@@ -1420,7 +1420,7 @@ $root.ritp = (function() {
                 }
                 object.dataType = "";
                 object.bufType = "";
-                object.replyTo = "";
+                object.outputTo = "";
             }
             if (message.fn != null && message.hasOwnProperty("fn"))
                 object.fn = message.fn;
@@ -1430,8 +1430,8 @@ $root.ritp = (function() {
                 object.dataType = message.dataType;
             if (message.bufType != null && message.hasOwnProperty("bufType"))
                 object.bufType = message.bufType;
-            if (message.replyTo != null && message.hasOwnProperty("replyTo"))
-                object.replyTo = message.replyTo;
+            if (message.outputTo != null && message.hasOwnProperty("outputTo"))
+                object.outputTo = message.outputTo;
             return object;
         };
 
