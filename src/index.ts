@@ -32,6 +32,19 @@ export interface OnStream {
     bufPuller: Subject<number>
 }
 
+export const getStrFromUint8Array = (u8arr:Uint8Array) => new Observable<string>(s => {
+    const b = new Blob([u8arr])
+    const fr = new FileReader()
+    fr.readAsText(b, 'utf-8')
+    fr.onerror = function(ev){
+        s.error('bad Uint8Array')
+    }
+    fr.onloadend = function () {
+        s.next(fr.result as string)
+        s.complete()
+    }
+})
+
 export const getUint8ArrayFromStr = (str:string) => new Observable<Uint8Array>(s => {
     if(typeof str != 'string') return s.error('expect a string')
     const b = new Blob([str])

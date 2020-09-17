@@ -1,0 +1,107 @@
+<h1>生产者</h1>
+<button id="btn" disabled>发送一条数据</button>
+<h1>消费者</h1>
+<label>模拟处理数据耗时:<input id="delay" type="number" value="3"> 秒</label>
+<div id="show"></div>
+
+<script src="../dist/index.js"></script>
+<script src="../node_modules/rxjs/bundles/rxjs.umd.js"></script>
+
+<script>
+    const { fromEvent, of, merge } = rxjs
+    const { map, mergeMap, catchError, repeat, delay, tap, mapTo, take, startWith, switchMap, shareReplay } = rxjs.operators
+    const { getUint8ArrayFromStr, fromH5WebSocket, initWith, getStrFromUint8Array } = ritp_js
+    //数据源
+    const btnEl = document.getElementById('btn')
+    const clicks = fromEvent(btnEl, 'click')
+    const delayEl = document.getElementById('delay')
+    const delaySec = fromEvent(delayEl, 'input').pipe(
+        map(ev => ev.target.value),
+        startWith(delayEl.value),
+        tap(x => console.log('typeof:', typeof x, x)),
+        shareReplay(1),
+    )
+    // delaySec.subscribe()
+    const divShow = document.getElementById('show')
+    //本端信息（自定义任意类型）
+    const myInfoData = JSON.stringify({
+        name: 'app X',
+    })
+    //Observable<Connection>
+    const conn = getUint8ArrayFromStr(myInfoData).pipe(
+        mergeMap(data => {
+            const socket = fromH5WebSocket('ws://localhost:8000/')
+            const init = initWith({ vertion: '0.3', data })
+            return init(socket)
+        }),
+    )
+    //处理连接
+    conn.pipe(
+        mergeMap(handleConnection),
+        //错误重连
+        catchError(err => of().pipe(delay(3000))),
+        repeat(),
+    ).subscribe()
+
+    function handleConnection({ remoteInfo, msgs, msgPuller, stream, register }) {
+        //处理remoteInfo
+        const failed = false //模拟处理成功
+        const firstPull = failed ? throwError('failed') : of(10000).pipe(
+            tap(_ => registerFns({ remoteInfo, stream, register })),//注册功能
+        )
+        const pulls = msgs.pipe(
+            mapTo(1), //收1个拉1个
+        )
+        return merge(pulls, firstPull).pipe(
+            tap(msgPuller),//拉取连接级消息（非常重要）
+        )
+    }
+    function registerFns(ctx) {
+        merge(
+            //注册fn
+            accReplyFn(ctx, "accReply"),
+            //创建流
+            accStream(ctx, "accReply"),
+        ).subscribe()
+    }
+
+    function accReplyFn({ remoteInfo, stream, register }, fn) {
+        return register(fn).pipe(
+            tap(({ header, bufs, bufPuller }) => {
+                //验证请求
+                console.info("onHeader:", header.fn)
+                const pulls = bufs.pipe(
+                    mergeMap(buf => getStrFromUint8Array(buf)),
+                    map(str => JSON.parse(str)),
+                    //handle data
+                    tap(data => divShow.innerText = 'acc:' + data.acc + ', computed at server time:' + data.time),
+                    //then pull 1 message after x seconds
+                    mergeMap(data => delaySec.pipe(
+                        switchMap(time => of(1).pipe(
+                            delay(time * 1000),
+                        )),
+                        take(1),
+                    )),
+                    tap(n => console.log('pull:', n)),
+                )
+                merge(
+                    pulls,
+                    of(1), //firstPull
+                ).subscribe(bufPuller)
+            }),
+        )
+    }
+
+    function accStream({ remoteInfo, stream, register }, outputTo) {
+        return getUint8ArrayFromStr('{}').pipe(
+            tap(data => {
+                const { pulls, sendableAmounts, isSendable, bufSender } = stream({ fn: 'acc', outputTo, data })
+                isSendable.subscribe(
+                    sendable => sendable ? btnEl.removeAttribute('disabled') : btnEl.setAttribute('disabled', 'disabled')
+                )
+                const bufs = clicks.pipe(mapTo(new Uint8Array([1])))
+                bufs.subscribe(bufSender)
+            }),
+        )
+    }
+</script>

@@ -22,6 +22,7 @@ export interface OnStream {
     bufs: Observable<Uint8Array>;
     bufPuller: Subject<number>;
 }
+export declare const getStrFromUint8Array: (u8arr: Uint8Array) => Observable<string>;
 export declare const getUint8ArrayFromStr: (str: string) => Observable<Uint8Array>;
 export declare const fromH5WebSocket: (url: string) => Observable<Socket>;
 export declare const initWith: (myInfo: ritp.IInfo) => (sockets: Observable<Socket>) => Observable<Connection>;
