@@ -326,8 +326,8 @@ export namespace ritp {
         /** Msg streamId */
         streamId?: (number|null);
 
-        /** Msg call */
-        call?: (ritp.ICall|null);
+        /** Msg header */
+        header?: (ritp.IHeader|null);
 
         /** Msg close */
         close?: (ritp.IClose|null);
@@ -354,8 +354,8 @@ export namespace ritp {
         /** Msg streamId. */
         public streamId: number;
 
-        /** Msg call. */
-        public call?: (ritp.ICall|null);
+        /** Msg header. */
+        public header?: (ritp.IHeader|null);
 
         /** Msg close. */
         public close?: (ritp.IClose|null);
@@ -370,7 +370,7 @@ export namespace ritp {
         public end?: (ritp.IEnd|null);
 
         /** Msg type. */
-        public type?: ("call"|"close"|"pull"|"buf"|"end");
+        public type?: ("header"|"close"|"pull"|"buf"|"end");
 
         /**
          * Creates a new Msg instance using the specified properties.
@@ -443,115 +443,115 @@ export namespace ritp {
         public toJSON(): { [k: string]: any };
     }
 
-    /** Properties of a Call. */
-    interface ICall {
+    /** Properties of a Header. */
+    interface IHeader {
 
-        /** Call fn */
+        /** Header fn */
         fn?: (string|null);
 
-        /** Call data */
+        /** Header data */
         data?: (Uint8Array|null);
 
-        /** Call dataType */
+        /** Header dataType */
         dataType?: (string|null);
 
-        /** Call bufType */
+        /** Header bufType */
         bufType?: (string|null);
 
-        /** Call callback */
-        callback?: (string|null);
+        /** Header replyTo */
+        replyTo?: (string|null);
     }
 
-    /** Represents a Call. */
-    class Call implements ICall {
+    /** Represents a Header. */
+    class Header implements IHeader {
 
         /**
-         * Constructs a new Call.
+         * Constructs a new Header.
          * @param [properties] Properties to set
          */
-        constructor(properties?: ritp.ICall);
+        constructor(properties?: ritp.IHeader);
 
-        /** Call fn. */
+        /** Header fn. */
         public fn: string;
 
-        /** Call data. */
+        /** Header data. */
         public data: Uint8Array;
 
-        /** Call dataType. */
+        /** Header dataType. */
         public dataType: string;
 
-        /** Call bufType. */
+        /** Header bufType. */
         public bufType: string;
 
-        /** Call callback. */
-        public callback: string;
+        /** Header replyTo. */
+        public replyTo: string;
 
         /**
-         * Creates a new Call instance using the specified properties.
+         * Creates a new Header instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns Call instance
+         * @returns Header instance
          */
-        public static create(properties?: ritp.ICall): ritp.Call;
+        public static create(properties?: ritp.IHeader): ritp.Header;
 
         /**
-         * Encodes the specified Call message. Does not implicitly {@link ritp.Call.verify|verify} messages.
-         * @param message Call message or plain object to encode
+         * Encodes the specified Header message. Does not implicitly {@link ritp.Header.verify|verify} messages.
+         * @param message Header message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: ritp.ICall, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: ritp.IHeader, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Encodes the specified Call message, length delimited. Does not implicitly {@link ritp.Call.verify|verify} messages.
-         * @param message Call message or plain object to encode
+         * Encodes the specified Header message, length delimited. Does not implicitly {@link ritp.Header.verify|verify} messages.
+         * @param message Header message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encodeDelimited(message: ritp.ICall, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encodeDelimited(message: ritp.IHeader, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes a Call message from the specified reader or buffer.
+         * Decodes a Header message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns Call
+         * @returns Header
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.Call;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ritp.Header;
 
         /**
-         * Decodes a Call message from the specified reader or buffer, length delimited.
+         * Decodes a Header message from the specified reader or buffer, length delimited.
          * @param reader Reader or buffer to decode from
-         * @returns Call
+         * @returns Header
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.Call;
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ritp.Header;
 
         /**
-         * Verifies a Call message.
+         * Verifies a Header message.
          * @param message Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
         public static verify(message: { [k: string]: any }): (string|null);
 
         /**
-         * Creates a Call message from a plain object. Also converts values to their respective internal types.
+         * Creates a Header message from a plain object. Also converts values to their respective internal types.
          * @param object Plain object
-         * @returns Call
+         * @returns Header
          */
-        public static fromObject(object: { [k: string]: any }): ritp.Call;
+        public static fromObject(object: { [k: string]: any }): ritp.Header;
 
         /**
-         * Creates a plain object from a Call message. Also converts values to other types if specified.
-         * @param message Call
+         * Creates a plain object from a Header message. Also converts values to other types if specified.
+         * @param message Header
          * @param [options] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: ritp.Call, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(message: ritp.Header, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
-         * Converts this Call to JSON.
+         * Converts this Header to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };

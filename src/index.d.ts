@@ -8,8 +8,8 @@ export interface Connection {
     remoteInfo: ritp.Info;
     msgs: Observable<ritp.Msg>;
     msgPuller: Subject<number>;
-    stream: (call: ritp.ICall) => Stream;
-    register: (fn: string) => Observable<StreamCall>;
+    stream: (header: ritp.IHeader) => Stream;
+    register: (fn: string) => Observable<OnStream>;
 }
 export interface Stream {
     pulls: Observable<number>;
@@ -17,8 +17,8 @@ export interface Stream {
     isSendable: Observable<boolean>;
     bufSender: Subject<Uint8Array>;
 }
-export interface StreamCall {
-    call: ritp.ICall;
+export interface OnStream {
+    header: ritp.IHeader;
     bufs: Observable<Uint8Array>;
     bufPuller: Subject<number>;
 }

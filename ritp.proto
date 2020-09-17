@@ -1,4 +1,4 @@
-//v0.4.0
+//v0.4.1
 syntax = "proto3";
 
 package ritp;
@@ -38,8 +38,8 @@ message Close {
 
 /*
     一条流有以下生命周期：
-    1. 发送端发送一个call来创建一条流，并创建一个Producer来发送之后的流数据buf。
-    2. 接收端收到并处理call后创建一个Consumer来处理对端Producer发来的数据流。
+    1. 发送端发送一个header来创建一条流，并创建一个Producer来发送之后的流数据buf。
+    2. 接收端收到并处理header后创建一个Consumer来处理对端Producer发来的数据流。
     3. Consumer发送close信号表示结束流并不再接收任何流消息，Producer必须在收到close后不再发送任何流消息。
     4. Consumer发送pull信号表示拉取流数据buf的个数，pull可累加并且一旦发送不可撤回。
     4. Producer必须在收到Consumer发来的pull后才能发送buf，发送buf的总个数必须小于等于pull的累加总和。
@@ -49,8 +49,8 @@ message Msg {
     //流ID
     uint32 stream_id = 1;
     oneof type {
-        //请求对端开始一条流，本端Producer生产数据，对端Consumer消费数据
-        Call call = 2;
+        //流数据头，发送一条此数据开始一条流，本端Producer生产数据，对端Consumer消费数据
+        Header header = 2;
         //Consumer关闭流，不再接收流数据
         Close close = 3;
         //表示Consumer可以接收更多的buf的个数，等同于ReactiveStream里request(n)的意义
@@ -63,9 +63,9 @@ message Msg {
     }
 }
 
-//调用，请求对端开始一条流
-message Call {
-    //功能名，此功能名应是一个可以在服务中心注册的服务方法
+//流数据头，发送一条此数据开始一条流
+message Header {
+    //Consumer的功能名，此功能名应是一个可以在服务中心注册的服务方法
     string fn = 1;
     //数据，可以包含生产者的信息、消费者需要的数据等
     bytes data = 2;
@@ -73,8 +73,8 @@ message Call {
     string data_type = 3;
     //Msg.buf的类型
     string buf_type = 4;
-    //回调地址， 例："accReply", "wss://hostname:8080/path?fn=accReply"
-    string callback = 5;
+    //应答地址， 例："accReply", "wss://hostname:8080/path?fn=accReply"
+    string reply_to = 5;
 }
 
 //结束流

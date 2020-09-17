@@ -810,7 +810,7 @@ $root.ritp = (function() {
          * @memberof ritp
          * @interface IMsg
          * @property {number|null} [streamId] Msg streamId
-         * @property {ritp.ICall|null} [call] Msg call
+         * @property {ritp.IHeader|null} [header] Msg header
          * @property {ritp.IClose|null} [close] Msg close
          * @property {number|null} [pull] Msg pull
          * @property {Uint8Array|null} [buf] Msg buf
@@ -841,12 +841,12 @@ $root.ritp = (function() {
         Msg.prototype.streamId = 0;
 
         /**
-         * Msg call.
-         * @member {ritp.ICall|null|undefined} call
+         * Msg header.
+         * @member {ritp.IHeader|null|undefined} header
          * @memberof ritp.Msg
          * @instance
          */
-        Msg.prototype.call = null;
+        Msg.prototype.header = null;
 
         /**
          * Msg close.
@@ -885,12 +885,12 @@ $root.ritp = (function() {
 
         /**
          * Msg type.
-         * @member {"call"|"close"|"pull"|"buf"|"end"|undefined} type
+         * @member {"header"|"close"|"pull"|"buf"|"end"|undefined} type
          * @memberof ritp.Msg
          * @instance
          */
         Object.defineProperty(Msg.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["call", "close", "pull", "buf", "end"]),
+            get: $util.oneOfGetter($oneOfFields = ["header", "close", "pull", "buf", "end"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -920,8 +920,8 @@ $root.ritp = (function() {
                 writer = $Writer.create();
             if (message.streamId != null && Object.hasOwnProperty.call(message, "streamId"))
                 writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.streamId);
-            if (message.call != null && Object.hasOwnProperty.call(message, "call"))
-                $root.ritp.Call.encode(message.call, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.header != null && Object.hasOwnProperty.call(message, "header"))
+                $root.ritp.Header.encode(message.header, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
             if (message.close != null && Object.hasOwnProperty.call(message, "close"))
                 $root.ritp.Close.encode(message.close, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
             if (message.pull != null && Object.hasOwnProperty.call(message, "pull"))
@@ -968,7 +968,7 @@ $root.ritp = (function() {
                     message.streamId = reader.uint32();
                     break;
                 case 2:
-                    message.call = $root.ritp.Call.decode(reader, reader.uint32());
+                    message.header = $root.ritp.Header.decode(reader, reader.uint32());
                     break;
                 case 3:
                     message.close = $root.ritp.Close.decode(reader, reader.uint32());
@@ -1021,12 +1021,12 @@ $root.ritp = (function() {
             if (message.streamId != null && message.hasOwnProperty("streamId"))
                 if (!$util.isInteger(message.streamId))
                     return "streamId: integer expected";
-            if (message.call != null && message.hasOwnProperty("call")) {
+            if (message.header != null && message.hasOwnProperty("header")) {
                 properties.type = 1;
                 {
-                    var error = $root.ritp.Call.verify(message.call);
+                    var error = $root.ritp.Header.verify(message.header);
                     if (error)
-                        return "call." + error;
+                        return "header." + error;
                 }
             }
             if (message.close != null && message.hasOwnProperty("close")) {
@@ -1080,10 +1080,10 @@ $root.ritp = (function() {
             var message = new $root.ritp.Msg();
             if (object.streamId != null)
                 message.streamId = object.streamId >>> 0;
-            if (object.call != null) {
-                if (typeof object.call !== "object")
-                    throw TypeError(".ritp.Msg.call: object expected");
-                message.call = $root.ritp.Call.fromObject(object.call);
+            if (object.header != null) {
+                if (typeof object.header !== "object")
+                    throw TypeError(".ritp.Msg.header: object expected");
+                message.header = $root.ritp.Header.fromObject(object.header);
             }
             if (object.close != null) {
                 if (typeof object.close !== "object")
@@ -1122,10 +1122,10 @@ $root.ritp = (function() {
                 object.streamId = 0;
             if (message.streamId != null && message.hasOwnProperty("streamId"))
                 object.streamId = message.streamId;
-            if (message.call != null && message.hasOwnProperty("call")) {
-                object.call = $root.ritp.Call.toObject(message.call, options);
+            if (message.header != null && message.hasOwnProperty("header")) {
+                object.header = $root.ritp.Header.toObject(message.header, options);
                 if (options.oneofs)
-                    object.type = "call";
+                    object.type = "header";
             }
             if (message.close != null && message.hasOwnProperty("close")) {
                 object.close = $root.ritp.Close.toObject(message.close, options);
@@ -1164,28 +1164,28 @@ $root.ritp = (function() {
         return Msg;
     })();
 
-    ritp.Call = (function() {
+    ritp.Header = (function() {
 
         /**
-         * Properties of a Call.
+         * Properties of a Header.
          * @memberof ritp
-         * @interface ICall
-         * @property {string|null} [fn] Call fn
-         * @property {Uint8Array|null} [data] Call data
-         * @property {string|null} [dataType] Call dataType
-         * @property {string|null} [bufType] Call bufType
-         * @property {string|null} [callback] Call callback
+         * @interface IHeader
+         * @property {string|null} [fn] Header fn
+         * @property {Uint8Array|null} [data] Header data
+         * @property {string|null} [dataType] Header dataType
+         * @property {string|null} [bufType] Header bufType
+         * @property {string|null} [replyTo] Header replyTo
          */
 
         /**
-         * Constructs a new Call.
+         * Constructs a new Header.
          * @memberof ritp
-         * @classdesc Represents a Call.
-         * @implements ICall
+         * @classdesc Represents a Header.
+         * @implements IHeader
          * @constructor
-         * @param {ritp.ICall=} [properties] Properties to set
+         * @param {ritp.IHeader=} [properties] Properties to set
          */
-        function Call(properties) {
+        function Header(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -1193,67 +1193,67 @@ $root.ritp = (function() {
         }
 
         /**
-         * Call fn.
+         * Header fn.
          * @member {string} fn
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @instance
          */
-        Call.prototype.fn = "";
+        Header.prototype.fn = "";
 
         /**
-         * Call data.
+         * Header data.
          * @member {Uint8Array} data
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @instance
          */
-        Call.prototype.data = $util.newBuffer([]);
+        Header.prototype.data = $util.newBuffer([]);
 
         /**
-         * Call dataType.
+         * Header dataType.
          * @member {string} dataType
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @instance
          */
-        Call.prototype.dataType = "";
+        Header.prototype.dataType = "";
 
         /**
-         * Call bufType.
+         * Header bufType.
          * @member {string} bufType
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @instance
          */
-        Call.prototype.bufType = "";
+        Header.prototype.bufType = "";
 
         /**
-         * Call callback.
-         * @member {string} callback
-         * @memberof ritp.Call
+         * Header replyTo.
+         * @member {string} replyTo
+         * @memberof ritp.Header
          * @instance
          */
-        Call.prototype.callback = "";
+        Header.prototype.replyTo = "";
 
         /**
-         * Creates a new Call instance using the specified properties.
+         * Creates a new Header instance using the specified properties.
          * @function create
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @static
-         * @param {ritp.ICall=} [properties] Properties to set
-         * @returns {ritp.Call} Call instance
+         * @param {ritp.IHeader=} [properties] Properties to set
+         * @returns {ritp.Header} Header instance
          */
-        Call.create = function create(properties) {
-            return new Call(properties);
+        Header.create = function create(properties) {
+            return new Header(properties);
         };
 
         /**
-         * Encodes the specified Call message. Does not implicitly {@link ritp.Call.verify|verify} messages.
+         * Encodes the specified Header message. Does not implicitly {@link ritp.Header.verify|verify} messages.
          * @function encode
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @static
-         * @param {ritp.ICall} message Call message or plain object to encode
+         * @param {ritp.IHeader} message Header message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        Call.encode = function encode(message, writer) {
+        Header.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.fn != null && Object.hasOwnProperty.call(message, "fn"))
@@ -1264,39 +1264,39 @@ $root.ritp = (function() {
                 writer.uint32(/* id 3, wireType 2 =*/26).string(message.dataType);
             if (message.bufType != null && Object.hasOwnProperty.call(message, "bufType"))
                 writer.uint32(/* id 4, wireType 2 =*/34).string(message.bufType);
-            if (message.callback != null && Object.hasOwnProperty.call(message, "callback"))
-                writer.uint32(/* id 5, wireType 2 =*/42).string(message.callback);
+            if (message.replyTo != null && Object.hasOwnProperty.call(message, "replyTo"))
+                writer.uint32(/* id 5, wireType 2 =*/42).string(message.replyTo);
             return writer;
         };
 
         /**
-         * Encodes the specified Call message, length delimited. Does not implicitly {@link ritp.Call.verify|verify} messages.
+         * Encodes the specified Header message, length delimited. Does not implicitly {@link ritp.Header.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @static
-         * @param {ritp.ICall} message Call message or plain object to encode
+         * @param {ritp.IHeader} message Header message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        Call.encodeDelimited = function encodeDelimited(message, writer) {
+        Header.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a Call message from the specified reader or buffer.
+         * Decodes a Header message from the specified reader or buffer.
          * @function decode
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {ritp.Call} Call
+         * @returns {ritp.Header} Header
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        Call.decode = function decode(reader, length) {
+        Header.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Call();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ritp.Header();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -1313,7 +1313,7 @@ $root.ritp = (function() {
                     message.bufType = reader.string();
                     break;
                 case 5:
-                    message.callback = reader.string();
+                    message.replyTo = reader.string();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1324,30 +1324,30 @@ $root.ritp = (function() {
         };
 
         /**
-         * Decodes a Call message from the specified reader or buffer, length delimited.
+         * Decodes a Header message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {ritp.Call} Call
+         * @returns {ritp.Header} Header
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        Call.decodeDelimited = function decodeDelimited(reader) {
+        Header.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a Call message.
+         * Verifies a Header message.
          * @function verify
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        Call.verify = function verify(message) {
+        Header.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.fn != null && message.hasOwnProperty("fn"))
@@ -1362,24 +1362,24 @@ $root.ritp = (function() {
             if (message.bufType != null && message.hasOwnProperty("bufType"))
                 if (!$util.isString(message.bufType))
                     return "bufType: string expected";
-            if (message.callback != null && message.hasOwnProperty("callback"))
-                if (!$util.isString(message.callback))
-                    return "callback: string expected";
+            if (message.replyTo != null && message.hasOwnProperty("replyTo"))
+                if (!$util.isString(message.replyTo))
+                    return "replyTo: string expected";
             return null;
         };
 
         /**
-         * Creates a Call message from a plain object. Also converts values to their respective internal types.
+         * Creates a Header message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {ritp.Call} Call
+         * @returns {ritp.Header} Header
          */
-        Call.fromObject = function fromObject(object) {
-            if (object instanceof $root.ritp.Call)
+        Header.fromObject = function fromObject(object) {
+            if (object instanceof $root.ritp.Header)
                 return object;
-            var message = new $root.ritp.Call();
+            var message = new $root.ritp.Header();
             if (object.fn != null)
                 message.fn = String(object.fn);
             if (object.data != null)
@@ -1391,21 +1391,21 @@ $root.ritp = (function() {
                 message.dataType = String(object.dataType);
             if (object.bufType != null)
                 message.bufType = String(object.bufType);
-            if (object.callback != null)
-                message.callback = String(object.callback);
+            if (object.replyTo != null)
+                message.replyTo = String(object.replyTo);
             return message;
         };
 
         /**
-         * Creates a plain object from a Call message. Also converts values to other types if specified.
+         * Creates a plain object from a Header message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @static
-         * @param {ritp.Call} message Call
+         * @param {ritp.Header} message Header
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        Call.toObject = function toObject(message, options) {
+        Header.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
@@ -1420,7 +1420,7 @@ $root.ritp = (function() {
                 }
                 object.dataType = "";
                 object.bufType = "";
-                object.callback = "";
+                object.replyTo = "";
             }
             if (message.fn != null && message.hasOwnProperty("fn"))
                 object.fn = message.fn;
@@ -1430,23 +1430,23 @@ $root.ritp = (function() {
                 object.dataType = message.dataType;
             if (message.bufType != null && message.hasOwnProperty("bufType"))
                 object.bufType = message.bufType;
-            if (message.callback != null && message.hasOwnProperty("callback"))
-                object.callback = message.callback;
+            if (message.replyTo != null && message.hasOwnProperty("replyTo"))
+                object.replyTo = message.replyTo;
             return object;
         };
 
         /**
-         * Converts this Call to JSON.
+         * Converts this Header to JSON.
          * @function toJSON
-         * @memberof ritp.Call
+         * @memberof ritp.Header
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        Call.prototype.toJSON = function toJSON() {
+        Header.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return Call;
+        return Header;
     })();
 
     ritp.End = (function() {

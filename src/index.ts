@@ -1,5 +1,5 @@
 import { merge, Observable, Subject, of, throwError, from, Observer, BehaviorSubject, EMPTY } from 'rxjs'
-import { map, scan, tap, withLatestFrom, flatMap, take, takeUntil, shareReplay, filter, share, last, catchError, endWith, startWith, distinctUntilChanged, mapTo } from "rxjs/operators";
+import { map, scan, tap, withLatestFrom, mergeMap, take, takeUntil, shareReplay, filter, share, last, catchError, endWith, startWith, distinctUntilChanged, mapTo } from "rxjs/operators";
 import { ritp } from "./pb";
 
 export interface Socket {
@@ -12,9 +12,9 @@ export interface Connection {
     msgs: Observable<ritp.Msg>
     msgPuller: Subject<number>
     //创建stream
-    stream: (call: ritp.ICall) => Stream
+    stream: (header: ritp.IHeader) => Stream
     //注册功能
-    register: (fn: string) => Observable<StreamCall>
+    register: (fn: string) => Observable<OnStream>
 }
 
 export interface Stream {
@@ -25,8 +25,8 @@ export interface Stream {
     bufSender: Subject<Uint8Array>
 }
 
-export interface StreamCall {
-    call: ritp.ICall
+export interface OnStream {
+    header: ritp.IHeader
     bufs: Observable<Uint8Array>
     // outputPulls: (pulls: Observable<number>) => void
     bufPuller: Subject<number>
@@ -156,7 +156,7 @@ const toGroupedInput = (buffers: Observable<Uint8Array>) => {
     const getFramesByType = getSubValues(frames, v => v.type)
     const remoteClose = getFramesByType('close').pipe(
         take(1),
-        flatMap(frame => throwError(frame.close)),
+        mergeMap(frame => throwError(frame.close)),
         shareReplay(),
     )
     const info = getFramesByType('info').pipe(
@@ -167,7 +167,7 @@ const toGroupedInput = (buffers: Observable<Uint8Array>) => {
         scan((acc, v) => acc + 1, 0),
         filter(n => n > 1),
         take(1),
-        flatMap(_ => throwError({
+        mergeMap(_ => throwError({
             reason: ritp.Close.Reason.PROTOCOL_ERROR,
             message: 'cannot send Info more than once'
         })),
@@ -184,7 +184,7 @@ const toGroupedInput = (buffers: Observable<Uint8Array>) => {
 const toOutputContext = (msgs: Observable<ritp.Msg>, pullsToGetMsg: Observable<number>) => {
     const outputQueue = new Queue<ritp.IMsg>()
     const msgsFromQueue = pullsToGetMsg.pipe(
-        flatMap(pull => from(outputQueue).pipe(
+        mergeMap(pull => from(outputQueue).pipe(
             take(pull),
         )),
         share(),
@@ -199,7 +199,7 @@ const toOutputContext = (msgs: Observable<ritp.Msg>, pullsToGetMsg: Observable<n
         msgsFromQueue,
         msgSender.pipe(
             withLatestFrom(sendableMsgsAmounts),
-            flatMap(([msg, amount]) => amount > 0 ? of(msg) : EMPTY.pipe(
+            mergeMap(([msg, amount]) => amount > 0 ? of(msg) : EMPTY.pipe(
                 tap({ complete: () => outputQueue.push(msg) })
             )),
             tap(_ => sendNotifier.next(-1)),
@@ -230,21 +230,21 @@ const toInputContext = (msgs: Observable<ritp.Msg>) => {
     const getEndMsgsByStreamId = getSubValues(endMsgs, msg => msg.streamId)
     const bufMsgs = getMsgsByType('buf')
     const getBufMsgsByStreamId = getSubValues(bufMsgs, msg => msg.streamId)
-    const callMsgs = getMsgsByType('call')
-    const getCallMsgsByFn = getSubValues(callMsgs, msg => msg.call.fn)
-    return { getCallMsgsByFn, getCloseMsgsByStreamId, getPullMsgsByStreamId, getEndMsgsByStreamId, getBufMsgsByStreamId }
+    const headerMsgs = getMsgsByType('header')
+    const getHeaderMsgsByFn = getSubValues(headerMsgs, msg => msg.header.fn)
+    return { getHeaderMsgsByFn, getCloseMsgsByStreamId, getPullMsgsByStreamId, getEndMsgsByStreamId, getBufMsgsByStreamId }
 }
 
 const registerWith = (
     msgSender: Subject<ritp.IMsg>,
-    getCallMsgsByFn: (key: string) => Observable<ritp.Msg>,
+    getHeaderMsgsByFn: (key: string) => Observable<ritp.Msg>,
     getEndMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
     getBufMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
-) => (fn: string): Observable<StreamCall> => getCallMsgsByFn(fn).pipe(
-    map(({ streamId, call }) => {
+) => (fn: string): Observable<OnStream> => getHeaderMsgsByFn(fn).pipe(
+    map(({ streamId, header }) => {
         const theEnd = getEndMsgsByStreamId(streamId).pipe(
             take(1),
-            flatMap(ev => ev.end.reason != ritp.End.Reason.COMPLETE ? throwError(ev.end) : of(ev.end)),
+            mergeMap(ev => ev.end.reason != ritp.End.Reason.COMPLETE ? throwError(ev.end) : of(ev.end)),
         )
         const bufPuller = new Subject<number>()
         const bufs = getBufMsgsByStreamId(streamId).pipe(
@@ -263,7 +263,7 @@ const registerWith = (
             catchError(err => of({ streamId, close: { reason: ritp.Close.Reason.APPLICATION_ERROR, message: err.message } })),
         )
         pullMsgsToSend.subscribe(msgSender) //side effect
-        return { call, bufs, bufPuller }
+        return { header, bufs, bufPuller }
     }),
 )
 
@@ -304,11 +304,11 @@ const streamWith = (
     msgSender: Subject<ritp.IMsg>,
     getCloseMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
     getPullMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
-) => (call: ritp.ICall): Stream => {
+) => (header: ritp.IHeader): Stream => {
     const streamId = newStreamId()
     const remoteClose = getCloseMsgsByStreamId(streamId).pipe(
         take(1),
-        flatMap(msg => throwError(msg.close)),
+        mergeMap(msg => throwError(msg.close)),
     )
     const pulls = getPullMsgsByStreamId(streamId).pipe(
         map(msg => msg.pull),
@@ -334,7 +334,7 @@ const streamWith = (
         filter(([_, sendable]) => sendable),
         map(([buf, _]) => ({ streamId, buf })),
         tap(_ => sendNotifier.next(-1)),
-        startWith({ streamId, call }),
+        startWith({ streamId, header }),
         endWith({ streamId, end: { reason: ritp.End.Reason.COMPLETE } }),
         catchError(err => of({ streamId, end: { reason: ritp.End.Reason.CANCEL, message: err.message } })),
     )
@@ -343,11 +343,11 @@ const streamWith = (
 }
 
 export const initWith = (myInfo: ritp.IInfo) => (sockets: Observable<Socket>): Observable<Connection> => sockets.pipe(
-    flatMap(({ buffers, sender }) => {
+    mergeMap(({ buffers, sender }) => {
         const { msgs, pullsToGetMsg, info, remoteClose, errInfoMoreThanOnce } = toGroupedInput(buffers)
         const { msgSender, msgPuller, pullFramesToSend, msgFramesToSend, newStreamId } = toOutputContext(msgs, pullsToGetMsg)
         const { getCloseMsgsByStreamId, getPullMsgsByStreamId,
-            getCallMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId } = toInputContext(msgs)
+            getHeaderMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId } = toInputContext(msgs)
         const errs = merge(
             errInfoMoreThanOnce,
         )
@@ -360,7 +360,7 @@ export const initWith = (myInfo: ritp.IInfo) => (sockets: Observable<Socket>): O
         ).subscribe(sender) //side effet
         return info.pipe(
             map(remoteInfo => {
-                const register = registerWith(msgSender, getCallMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId)
+                const register = registerWith(msgSender, getHeaderMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId)
                 const stream = streamWith(newStreamId, msgSender, getCloseMsgsByStreamId, getPullMsgsByStreamId)
                 return { remoteInfo, msgs, msgPuller, register, stream }
             }),
