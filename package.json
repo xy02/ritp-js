@@ -1,6 +1,6 @@
 {
   "name": "ritp-js",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "an implementation of RITP",
   "repository": {
     "type": "git",

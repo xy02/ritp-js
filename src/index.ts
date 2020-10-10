@@ -173,25 +173,26 @@ const toGroupedInput = (buffers: Observable<Uint8Array>) => {
         shareReplay(),
     )
     const info = getFramesByType('info').pipe(
+        take(1),
         map(frame => frame.info as ritp.Info),
         shareReplay(),
     )
-    const errInfoMoreThanOnce = info.pipe(
-        scan((acc, v) => acc + 1, 0),
-        filter(n => n > 1),
-        take(1),
-        mergeMap(_ => throwError({
-            reason: ritp.Close.Reason.PROTOCOL_ERROR,
-            message: 'cannot send Info more than once'
-        })),
-    )
+    // const errInfoMoreThanOnce = info.pipe(
+    //     scan((acc, v) => acc + 1, 0),
+    //     filter(n => n > 1),
+    //     take(1),
+    //     mergeMap(_ => throwError({
+    //         reason: ritp.Close.Reason.PROTOCOL_ERROR,
+    //         message: 'cannot send Info more than once'
+    //     })),
+    // )
     const pullsToGetMsg = getFramesByType('pull').pipe(
         map(frame => frame.pull),
     )
     const msgs = getFramesByType('msg').pipe(
         map(frame => frame.msg as ritp.Msg),
     )
-    return { msgs, pullsToGetMsg, info, remoteClose, errInfoMoreThanOnce }
+    return { msgs, pullsToGetMsg, info, remoteClose }
 }
 
 const toOutputContext = (msgs: Observable<ritp.Msg>, pullsToGetMsg: Observable<number>) => {
@@ -357,16 +358,16 @@ const streamWith = (
 
 export const initWith = (myInfo: ritp.IInfo) => (sockets: Observable<Socket>): Observable<Connection> => sockets.pipe(
     mergeMap(({ buffers, sender }) => {
-        const { msgs, pullsToGetMsg, info, remoteClose, errInfoMoreThanOnce } = toGroupedInput(buffers)
+        const { msgs, pullsToGetMsg, info, remoteClose } = toGroupedInput(buffers)
         const { msgSender, msgPuller, pullFramesToSend, msgFramesToSend, newStreamId } = toOutputContext(msgs, pullsToGetMsg)
         const { getCloseMsgsByStreamId, getPullMsgsByStreamId,
             getHeaderMsgsByFn, getEndMsgsByStreamId, getBufMsgsByStreamId } = toInputContext(msgs)
-        const errs = merge(
-            errInfoMoreThanOnce,
-        )
+        // const errs = merge(
+        //     errInfoMoreThanOnce,
+        // )
         merge(msgFramesToSend, pullFramesToSend).pipe(
             startWith({ info: myInfo }),
-            takeUntil(errs),
+            // takeUntil(errs),
             catchError(close => of({ close })),
             map(frame => ritp.Frame.encode(frame).finish()),
             takeUntil(remoteClose),

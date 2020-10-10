@@ -1,5 +1,5 @@
-const { Observable, Subject, of, merge, throwError } = require('rxjs')
-const { mergeMap, map, mapTo, tap, share, scan, takeUntil } = require("rxjs/operators");
+const { Observable, Subject, of, merge, throwError, EMPTY } = require('rxjs')
+const { mergeMap, map, mapTo, tap, share, scan, takeUntil, catchError } = require("rxjs/operators");
 const { initWith } = require("../dist/index")
 // const { initWith } = require("ritp-js");
 // const { ritp } = require("ritp-js/src/pb")
@@ -42,6 +42,7 @@ function handleConnection({ remoteInfo, msgs, msgPuller, stream, register }) {
         mapTo(1), //收1个拉1个
     )
     return merge(pulls, firstPull).pipe(
+        catchError(err=> EMPTY),
         tap(msgPuller),//拉取连接级消息（非常重要）
     )
 }
@@ -50,6 +51,8 @@ function registerFns(ctx) {
     merge(
         accFn(ctx),
         //其他fn....
+    ).pipe(
+        catchError(err=> EMPTY),
     ).subscribe()
 }
 
