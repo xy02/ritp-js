@@ -1,0 +1,107 @@
+<div id="test-accReply"></div>
+<div id="test-accReply2"></div>
+<script src="../dist/index.js"></script>
+<script src="../node_modules/rxjs/bundles/rxjs.umd.js"></script>
+<script>
+    const { range, of, from, Observable,Subject, interval, merge } = rxjs;
+    const {  mapTo, scan, sampleTime, startWith, catchError, delay, repeat, flatMap, map, tap, shareReplay, share, take, groupBy, find, takeUntil, finalize } = rxjs.operators;
+    console.log(ritp_js)
+    const {getUint8ArrayFromStr, fromH5WebSocket, initWith} = ritp_js
+    const conn = getUint8ArrayFromStr("app1").pipe(
+        flatMap(data => {
+            const socket = fromH5WebSocket('ws://localhost:8000/')
+            const init = initWith({ vertion: '0.3', data })
+            return init(socket)
+        }),
+    )
+    const app = conn.pipe(
+        //验证处理remoteInfo
+        flatMap(handleRemoteInfo),
+        flatMap(ctx => merge(
+            //注册fn
+            accReplyFn(ctx, "accReply", 1000),
+            // accReplyFn(ctx,"accReply2",2000),
+            //创建流
+            accCall(ctx, "accReply"),
+            // accCall(ctx,"accReply2"),
+        )),
+        catchError(err => of().pipe(delay(3000))),
+        repeat(),
+    )
+    app.subscribe()
+
+    function handleRemoteInfo({ remoteInfo, msgs, msgPuller, stream, register }) {
+        return of(remoteInfo).pipe(
+            // delay(2000),
+            tap(
+                _ => {
+                    //处理remoteInfo成功时，拉取连接级消息（非常重要）
+                    const pulls = msgs.pipe(
+                        mapTo(1), //收1个拉1个
+                        startWith(10000), //头次拉取1000个
+                    )
+                    pulls.subscribe(msgPuller)
+                },
+                err => {
+                    //处理remoteInfo失败时，发送错误
+                    throwError("some error").subscribe(msgPuller)
+                }
+            ),
+            map(remoteInfo => ({ remoteInfo, stream, register })),
+        )
+    }
+
+    function accReplyFn({ remoteInfo, stream, register }, fn, wait) {
+        return register(fn).pipe(
+            tap(({ header, bufs, bufPuller }) => {
+                //test
+                let count = 0
+                let el = document.getElementById('test-' + header.fn)
+                console.log(el)
+                bufs.pipe(
+                    scan((acc, v) => acc + 1, 0),
+                    tap(acc => count = acc),
+                ).subscribe()
+                let begin = Date.now()
+                setInterval(() => {
+                    const speed = count / ((Date.now() - begin) / 1000) + '/s'
+                    el.innerText = speed
+                }, 1000)
+                //验证请求
+                console.info("onCall:", header.fn)
+                //then pull 10 message and handle bufs
+                const pulls = bufs.pipe(
+                    flatMap(buf => {
+                        //handle buf
+                        // console.log("on buf:",call.fn, buf)
+                        //then pull 1 message after 3 seconds
+                        return of(1)
+                            // .pipe(delay(wait))
+                    }),
+                )
+                pulls.subscribe(bufPuller)
+                bufPuller.next(100)//firstPull
+            }),
+        )
+    }
+
+    function accCall({ remoteInfo, stream, register }, replyTo) {
+        return of(replyTo).pipe(
+            tap(outputTo => {
+                const bufSender = new Subject()
+                const { pulls, isSendable } = stream({ fn: 'acc', outputTo }, bufSender)
+                const bufs = pulls.pipe(
+                    // tap(pull=>{console.log('pull', pull)}),
+                    // flatMap(pull=>range(1,pull).pipe(mapTo(new Uint8Array([pull])))),
+                    flatMap(pull=> 
+                        of(new Uint8Array([pull])).pipe(
+                            repeat(pull),
+                        )
+                    ),
+                )
+                isSendable.subscribe(sendable=>{}, err=>{})
+                bufs.subscribe(bufSender)
+            }),
+        )
+    }
+</script>

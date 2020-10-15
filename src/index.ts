@@ -12,17 +12,17 @@ export interface Connection {
     msgs: Observable<ritp.Msg>
     msgPuller: Subject<number>
     //创建stream
-    stream: (header: ritp.IHeader) => Stream
+    stream: (header: ritp.IHeader, bufs: Observable<Uint8Array>) => Stream
     //注册功能
     register: (fn: string) => Observable<OnStream>
 }
 
 export interface Stream {
     pulls: Observable<number>
-    sendableAmounts: Observable<number>
+    // sendableAmounts: Observable<number>
     isSendable: Observable<boolean>
     // outputBufs: (bufs: Observable<Uint8Array>) => void
-    bufSender: Subject<Uint8Array>
+    // bufSender: Subject<Uint8Array>
 }
 
 export interface OnStream {
@@ -318,42 +318,47 @@ const streamWith = (
     msgSender: Subject<ritp.IMsg>,
     getCloseMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
     getPullMsgsByStreamId: (key: number) => Observable<ritp.Msg>,
-) => (header: ritp.IHeader): Stream => {
+) => (header: ritp.IHeader, bufs: Observable<Uint8Array>): Stream => {
     const streamId = newStreamId()
+    const sendable = new BehaviorSubject(false)
+    const msgs = bufs.pipe(
+        withLatestFrom(sendable),
+        filter(([_, sendable]) => sendable),
+        map(([buf, _]) => ({ streamId, buf })),
+        endWith({ streamId, end: { reason: ritp.End.Reason.COMPLETE } }),
+        catchError(err => of({ streamId, end: { reason: ritp.End.Reason.CANCEL, message: err.message } })),
+        tap(msgSender),
+        share(),
+    )
+    const theEndOfMsgs = msgs.pipe(last())
     const remoteClose = getCloseMsgsByStreamId(streamId).pipe(
         take(1),
         mergeMap(msg => throwError(msg.close)),
     )
     const pulls = getPullMsgsByStreamId(streamId).pipe(
         map(msg => msg.pull),
+        takeUntil(theEndOfMsgs),
         takeUntil(remoteClose),
         share(),
     )
-    const bufSender = new Subject<Uint8Array>()
-    const sendNotifier = new BehaviorSubject(0)
-    const bufs = bufSender.pipe(
-        takeUntil(remoteClose),
-    )
-    const sendableAmounts = merge(sendNotifier, pulls).pipe(
+    const sendableAmounts = merge(msgs.pipe(mapTo(-1)), pulls).pipe(
         scan((acc, num) => acc + num, 0),
-        shareReplay(1),
     )
-    const isSendable = sendableAmounts.pipe(
-        map(amount => amount > 0),
-        distinctUntilChanged(),
-        shareReplay(1),
+    const isSendable = new Observable<boolean>(subscriber=>{
+        const sub = sendableAmounts.pipe(
+            map(amount => amount > 0),
+            distinctUntilChanged(),
+            tap(sendable),
+        ).subscribe(subscriber)
+        //do after subscribe
+        msgSender.next({ streamId, header })
+        return ()=>{
+            sub.unsubscribe()
+        }
+    }).pipe(
+        share()
     )
-    const msgsToSend = bufs.pipe(
-        withLatestFrom(isSendable),
-        filter(([_, sendable]) => sendable),
-        map(([buf, _]) => ({ streamId, buf })),
-        tap(_ => sendNotifier.next(-1)),
-        startWith({ streamId, header }),
-        endWith({ streamId, end: { reason: ritp.End.Reason.COMPLETE } }),
-        catchError(err => of({ streamId, end: { reason: ritp.End.Reason.CANCEL, message: err.message } })),
-    )
-    msgsToSend.subscribe(msgSender) //side effect
-    return { pulls, sendableAmounts, bufSender, isSendable }
+    return { pulls, isSendable }
 }
 
 export const initWith = (myInfo: ritp.IInfo) => (sockets: Observable<Socket>): Observable<Connection> => sockets.pipe(

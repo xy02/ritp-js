@@ -95,12 +95,11 @@
     function accStream({ remoteInfo, stream, register }, outputTo) {
         return getUint8ArrayFromStr('{}').pipe(
             tap(data => {
-                const { pulls, sendableAmounts, isSendable, bufSender } = stream({ fn: 'acc', outputTo, data })
+                const bufs = clicks.pipe(mapTo(new Uint8Array([1])))
+                const { pulls, isSendable } = stream({ fn: 'acc', outputTo, data }, bufs)
                 isSendable.subscribe(
                     sendable => sendable ? btnEl.removeAttribute('disabled') : btnEl.setAttribute('disabled', 'disabled')
                 )
-                const bufs = clicks.pipe(mapTo(new Uint8Array([1])))
-                bufs.subscribe(bufSender)
             }),
         )
     }

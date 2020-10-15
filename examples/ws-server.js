@@ -62,8 +62,6 @@ function accFn({ remoteInfo, stream, register }) {
         tap(({ header, bufs, bufPuller }) => {
             //验证请求
             console.info("onHeader:", header.fn)
-            //请求创建下游流
-            const outputStream = stream({ fn: header.outputTo, bufType: 'json' })
             //处理上游发来的数据（未向上游拉取数据时是不会收到数据的）
             const handledBufs = bufs.pipe(
                 scan((acc, val) => acc + 1, 0),
@@ -75,10 +73,12 @@ function accFn({ remoteInfo, stream, register }) {
                     return buf
                 }),
             )
-            //向下游输出处理过的数据
-            handledBufs.subscribe(outputStream.bufSender)
-            //让拉取上游数据的速度与下游outputStream的拉取速度相同
-            outputStream.pulls.subscribe(bufPuller)
+            //创建下游流（无副作用，直到订阅其中的isSendable时才会发送header）
+            const downStream = stream({ fn: header.outputTo, bufType: 'json' }, handledBufs)
+            //让拉取上游数据的速度与下游流的拉取速度相同
+            downStream.pulls.subscribe(bufPuller)
+            //副作用操作，会发送header
+            downStream.isSendable.subscribe(sendable=>{}, err=>{})
         }),
     )
 }
